@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - _coladd_common
+  - _self_
+
+experiment_name: binsaw_coladd
+variant_name: coladd_seq_xxs
+
+training_stage: 2
+freeze_encoder: true
+use_encoder_latent_sampling: false
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: ${num_inference_steps}
+
+group: ${core_model}_sampling
+postfix: _sample_${variant_name}
+train_log_dir: logs/models/binsaw/coladd_${core_model}_stage${training_stage}_${model_size}
+sample_log_dir: logs/models/binsaw/sampling/coladd_${core_model}_${model_size}

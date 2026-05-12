@@ -1,0 +1,154 @@
+[project]
+name = "ladd"
+version = "0.1.0"
+description = "Latent-Augmented Discrete Diffusion Models"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name="Dario Shariatian", email="dario.shariatian@inria.fr" }
+]
+dependencies = [
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "lightning==2.4.0",
+    "wandb==0.19.8",
+    "vllm==0.7.3; platform_system == 'Linux'",
+    "transformers==4.51.0",
+    "datasets==3.3.2",
+    "omegaconf==2.3.0",
+    "sentencepiece==0.2.0",
+    "bitsandbytes==0.45.2; platform_system == 'Linux'",
+    "deepspeed==0.16.4; platform_system == 'Linux'",
+    "flash-attn==2.7.4.post1; platform_system == 'Linux'",
+    "natsort>=8.4.0",
+    "safetensors>=0.5.2",
+    "accelerate>=1.4.0",
+    "hf-transfer>=0.1.9",
+    "gradio>=5.20.0",
+    "einops>=0.8.0",
+    "litdata==0.2.43",
+    "google-cloud-storage>=3.1.0",
+    "polars>=1.26.0",
+    "scipy>=1.15.2",
+    "liger-kernel==0.5.10; platform_system == 'Linux'",
+    "peft>=0.15.2",
+    "tensorboard>=2.19.0",
+    "msgpack>=1.1.0",
+    "ruff>=0.11.11",
+    "mypy>=1.17.0",
+    "black>=25.1.0",
+    "seaborn>=0.13.2",
+    "hydra-core>=1.3.2",
+    "jupyter>=1.1.1",
+    "lab>=8.4",
+    "plotly>=6.3.0",
+    "vector-quantize-pytorch>=1.27.15",
+    "pypdf>=6.6.0",
+    "py-spy>=0.4.2",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+
+[tool.setuptools]
+packages = ["dlm"]
+
+[tool.uv]
+no-build-isolation-package = ["flash-attn"]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'"}
+]
+torchvision = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'"}
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.5",
+    "matplotlib",
+    "ruff>=0.11.11",
+    "pytest>=8.0.0",
+]
+
+[tool.ruff]
+extend-include = ["*.ipynb"]
+line-length = 125
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "TID252",
+    "ANN002",
+    "ANN003",
+    "ANN202",
+    "ANN204",
+    "ANN206",
+    "ANN001",
+    "S101", 
+    "Q000",
+    "ERA001",
+    "EM102",
+    "ARG002",
+    "T201",
+    "ANN102",
+    "ANN201",
+    "D103",
+    "SIM108",
+    "PTH",
+    "B904",
+    "W191",
+    "TRY003",
+    "D",
+    "E101",
+    "N812",
+    "N806",
+    "FBT",
+    "PLR0913",
+    "EM101",
+    "W293",
+    "BLE001",
+    "I001",
+    "E402",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+line-ending = "auto"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

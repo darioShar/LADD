@@ -1,0 +1,68 @@
+# @package _global_
+
+# Custom configuration for autoregressive language-model baselines
+
+# Data-provided fields
+vocab_size: null
+sequence_length: null
+mask_token_id: null
+
+# Reproducibility
+seed: 42
+
+# Model behavior
+core_model: AR
+strict_loading: true
+ddp_find_unused_parameters: false
+use_k_first_input_ids_as_prompt: null
+
+# Training/infra defaults
+gradient_checkpointing: false
+torch_compile: null
+use_ema: false
+ema_decay: 0.9999
+eval_and_log_first_n_batches: 1
+limit_eval_batch_size: ${eval_batch_size}
+optimizer_config:
+  target: torch.optim.AdamW
+  params:
+    lr: 3e-4
+    betas: [0.9, 0.999]
+    weight_decay: 0.1
+    eps: 1e-8
+    fused: false
+scheduler_config:
+  name: constant_with_warmup
+  num_warmup_steps: 2500
+
+model:
+  target: dlm.models.Autoregressive
+  params:
+    sequence_length: ${sequence_length}
+    vocab_size: ${eval:"${vocab_size} + 1"}
+    strict_loading: ${strict_loading}
+    core_model: ${core_model}
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+    teacher_model_name_or_path: gpt2-large
+    enable_entropy: true
+    enable_generative_perplexity: true
+    enable_gradient_moment_metric: true
+    enable_sliced_wasserstein: true
+    enable_token_distribution_kl: true
+    enable_grad_norms_logging: false
+    limit_eval_batch_size: ${limit_eval_batch_size}
+    gradient_checkpointing: ${gradient_checkpointing}
+    torch_compile: ${torch_compile}
+    use_ema: ${use_ema}
+    ema_decay: ${ema_decay}
+    on_validation_only_eval: false
+    optimizer_config: ${optimizer_config}
+    scheduler_config: ${scheduler_config}
+    loss_config: null
+    generation_config:
+      do_sample: true
+      num_beams: 1
+      temperature: 1.0
+      max_length: ${sequence_length}
+
+    model_config: null

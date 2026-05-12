@@ -1,0 +1,109 @@
+# @package _global_
+
+# Custom configuration for MDLM
+
+# Data-provided fields
+vocab_size: null # to be defined by data
+sequence_length: null # to be defined by data
+mask_token_id: null # to be defined by data
+
+# Reproducibility
+seed: 42
+
+# Model behavior
+core_model: MDLM
+conditional: false
+custom_encoder: false
+num_inference_steps: ${sequence_length}
+temperature: null # null/1.0 disable temperature sampling
+use_k_first_input_ids_as_prompt: null # if not null, use the first k tokens as prompt
+max_new_tokens: ${sequence_length}
+strict_loading: true
+ddp_find_unused_parameters: false
+
+# Noise schedule
+x_noise_schedule: linear # linear, loglinear
+
+x_noise_sampler_config_targets:
+  linear: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+  loglinear: dlm.modules.diffusionmodules.noise_sampling.SigmaLogLinearSampling
+
+# Training/infra defaults
+use_data_loss_elbo: true
+gradient_checkpointing: false
+torch_compile: null
+use_ema: true
+ema_decay: 0.9999
+eval_and_log_first_n_batches: 1
+limit_eval_batch_size: ${eval_batch_size}
+optimizer_config:
+  target: torch.optim.AdamW
+  params:
+    lr: 3e-4
+    betas: [0.9, 0.999]
+    weight_decay: 0.03
+    eps: 1e-8
+    fused: false
+scheduler_config:
+  name: constant_with_warmup
+  num_warmup_steps: 2500
+
+model:
+  target: dlm.models.DiffusionLM
+  params:
+    sequence_length: ${sequence_length}
+    vocab_size: ${eval:"${vocab_size} + 1"} # +1 for internal mask token representation
+    conditional: ${conditional}
+    custom_encoder: ${custom_encoder}
+    strict_loading: ${strict_loading}
+    core_model: ${core_model}
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+    teacher_model_name_or_path: gpt2-large
+    enable_entropy: true
+    enable_generative_perplexity: true
+    enable_gradient_moment_metric: true
+    enable_sliced_wasserstein: true
+    enable_token_distribution_kl: true
+    enable_grad_norms_logging: false
+    limit_eval_batch_size: ${limit_eval_batch_size}
+    gradient_checkpointing: ${gradient_checkpointing}
+    torch_compile: ${torch_compile}
+    use_ema: ${use_ema}
+    ema_decay: ${ema_decay}
+    on_validation_only_eval: false
+    use_k_first_input_ids_as_prompt: ${use_k_first_input_ids_as_prompt} # if not null, use the first k tokens as prompt (for conditional generation)
+    optimizer_config: ${optimizer_config}
+    scheduler_config: ${scheduler_config}
+    
+    model_config: null 
+    encoder_config: null
+    loss_config:
+      target: dlm.modules.diffusionmodules.masked_loss.MaskedDiffusionLoss
+      params:
+        conditional: ${conditional}
+        mask_token_id: ${mask_token_id}
+        use_data_loss_elbo: ${use_data_loss_elbo}
+        noise_sampler_config:
+          target: ${x_noise_sampler_config_targets.${x_noise_schedule}}
+          params:
+            eps: 1e-4
+        time_sampler_config:
+          target: dlm.modules.diffusionmodules.time_sampling.LowDiscrepancySampling
+          params:
+            eps: 1e-4
+    sampler_config:
+      target: dlm.modules.diffusionmodules.masked_sampling.AbsorbingSampler
+      params:
+        max_new_tokens: ${max_new_tokens}
+        num_inference_steps: ${num_inference_steps}
+        enable_caching: false
+        noise_removal: true
+        temperature: ${temperature}
+        mask_token_id: ${mask_token_id}
+        verbose: true
+        discretization_config:
+          target: dlm.modules.diffusionmodules.discretization.UniformDiscretization
+        noise_sampler_config:
+          target: ${x_noise_sampler_config_targets.${x_noise_schedule}}
+          params:
+            eps: 1e-4

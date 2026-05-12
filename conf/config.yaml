@@ -1,0 +1,38 @@
+# Top-level defaults & global knobs. Later items override earlier ones (left→right).
+defaults:
+  - _self_
+  - base: null # mdlm / coladd / diladd
+  - data: owt/owt
+  - model: null # owt/coladd - owt/mdlm
+  - lightning/trainer: default
+  - lightning/callbacks: [ckpt, lr, predict]
+  - lightning/strategy: ddp
+  - resume: from_null
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+# Global knobs (same spirit as your script; override from CLI)
+mode: train        # train | val | pred
+projectname: null # mdlm-baseline
+debug: false
+postfix: ""
+group: null
+hf_cache_dir: ./.hf_cache
+hf_offline: false
+hf_local_files_only: ${hf_offline}
+enable_wandb: true
+
+# WandB/logging semantics handled in main.py (forking logic preserved)
+fork_log: false
+
+# If set, Lightning will NOT resume the full state; we'll pass this path via model.hparams
+load_weights_only: null
+
+paths:
+  # Keep your legacy logs root; main.py builds the final run dir beneath this
+  log_root: logs/models/tmp
+
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .

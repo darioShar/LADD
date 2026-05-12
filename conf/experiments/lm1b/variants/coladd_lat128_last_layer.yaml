@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - /experiments/lm1b/variants/_coladd_common
+  - _self_
+
+variant_name: coladd_lat128_last_layer
+y_num_patches: 128
+pooling_strategy: last_layer

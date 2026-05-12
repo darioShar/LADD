@@ -1,0 +1,9 @@
+# @package lightning.trainer
+devices: ${num_gpu_devices}
+fast_dev_run: 2
+limit_train_batches: 0.001
+limit_val_batches: 0.01
+log_every_n_steps: 1
+num_sanity_val_steps: 2
+precision: bf16-mixed
+enable_model_summary: true

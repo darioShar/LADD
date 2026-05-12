@@ -1,0 +1,17 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - _coladd_common
+  - _self_
+
+experiment_name: lm1b_coladd
+variant_name: coladd_lat128_last_layer
+
+group: coladd_sampling
+postfix: _${variant_name}_temperature${temperature}
+
+num_inference_steps: [1, 2, 4, 8, 16, 32, 64, 128]
+
+train_log_dir: logs/models/lm1b/coladd_${encoder_type}_${model_size}_${y_num_patches}_${patch_dim}_pool_${pooling_strategy}_p_r_${use_p_r_label}_ind_${independent_timesteps_label}
+sample_log_dir: logs/models/lm1b/sampling/temperature_${temperature}_coladd_${encoder_type}_${model_size}_${y_num_patches}_${patch_dim}_pool_${pooling_strategy}_p_r_${use_p_r_label}_ind_${independent_timesteps_label}

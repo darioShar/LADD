@@ -1,0 +1,17 @@
+# @package _global_
+
+experiment_stage: train
+
+mode: train
+projectname: text8
+
+paths:
+  log_root: ${log_dir}
+
+lightning:
+  trainer:
+    accumulate_grad_batches: ${accumulate_grad_batches}
+  callbacks:
+    model_checkpoint_callback:
+      params:
+        save_top_k: -1

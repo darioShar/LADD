@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: mdlm
+  - override /data: lm1b/lm1b_qwen_packed
+  - override /model: lm1b/mdlm
+  - _self_
+
+experiment_name: lm1b_mdlm
+variant_name: mdlm_bl
+
+group: mdlm_sampling
+postfix: _${variant_name}_temp${temperature}
+
+core_model: MDLM
+model_size: BL
+num_inference_steps: [1, 2, 4, 8, 16, 32, 64, 128]
+use_data_loss_elbo: false
+use_data_loss_elbo_label: 'false'
+
+train_log_dir: logs/models/lm1b/pack_elbo_${use_data_loss_elbo_label}_mdlm_lm1b_${model_size}
+sample_log_dir: logs/models/lm1b/sampling/temperature_${temperature}_pack_elbo_${use_data_loss_elbo_label}_mdlm_lm1b_${model_size}

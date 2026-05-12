@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - override /base: mdlm
+  - override /data: text8/text8
+  - override /model: text8/mdlm
+  - _self_
+
+experiment_name: text8_mdlm
+variant_name: mdlm_b
+
+group: ${core_model}
+postfix: _${core_model}
+
+model_size: B
+core_model: MDLM
+sequence_length: 128
+num_inference_steps: ${sequence_length}
+use_data_loss_elbo: true
+torch_compile: default
+
+log_dir: logs/models/text8/mdlm_text8_${model_size}
+
+lightning:
+  trainer:
+    val_check_interval: 10000
+  callbacks:
+    model_checkpoint_callback:
+      params:
+        every_n_train_steps: 10000
+
+model:
+  params:
+    eval_and_log_first_n_batches: 2

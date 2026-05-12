@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - /experiments/lm1b/variants/_diladd_common
+  - _self_
+
+variant_name: diladd_lat128_cb512_dim32
+latent_sequence_length: 128
+codebook_size: 512
+vqvae_latent_dim: 32
+qwen_pooling_strategy: last_layer

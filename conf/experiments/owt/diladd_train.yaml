@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - _diladd_common
+  - _self_
+
+experiment_name: owt_diladd
+variant_name: diladd_lat64_cb8192_dim128
+
+group: diladd
+postfix: _diladd
+
+log_dir: logs/models/owt/diladd_${model_size}_${codebook_size}_${vqvae_latent_dim}_${latent_sequence_length}

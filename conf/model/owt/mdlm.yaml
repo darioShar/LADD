@@ -1,0 +1,9 @@
+# @package _global_
+# OpenWebText dataset - MDLM model
+
+defaults:
+  - /model/base
+
+dit_time_type: none
+# Dataset-specific overrides
+# (Uses base defaults: dit_dropout=0.1)

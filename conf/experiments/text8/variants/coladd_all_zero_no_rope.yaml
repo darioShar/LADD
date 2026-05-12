@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - /experiments/text8/variants/_coladd_common
+  - _self_
+
+variant_name: coladd_all_zero_no_rope
+p_mask_input_enc: 0.1

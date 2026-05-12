@@ -1,0 +1,72 @@
+# @package _global_
+# Base configuration for MDLM (Masked Discrete Language Model) models
+# This provides the common structure for MDLM models across all datasets
+
+defaults:
+  - dit_sizes
+
+# Model size: S, B, L, or XL
+model_size: B
+
+dit_dropout: 0.1
+dit_time_type: time
+attn_backend: sdpa  # auto | flash | sdpa
+
+
+# conditional, custom_encoder flags determine encoder use
+
+# Conditional latent size (only used when conditional=true and encoder is used)
+conditional_latent_dim: 1024
+
+# Encoder presets (selected via custom_encoder flag)
+encoder_latent_dim: 128
+encoder_num_patches: 4
+encoder_normalize_embeddings: false
+
+# Encoder config presets (optional - can be null if no encoder needed)
+mlp_encoder_config:
+  target: dlm.transformers.dit.dit.MLPLatentEncoder
+  params:
+    latent_dim: ${conditional_latent_dim}
+    cond_hidden_size: ${encoder_cond_hidden_size}
+    mlp_ratio: 4.0
+
+dit_conditional_encoder_config:
+  target: dlm.transformers.dit.latent_dit.EncoderDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}
+        hidden_size: ${encoder_hidden_size}
+        cond_hidden_size: ${encoder_cond_hidden_size}
+        num_hidden_layers: ${encoder_num_hidden_layers}
+        num_attention_heads: ${encoder_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: none
+        y_time_type: time
+        y_latent_dim: ${encoder_latent_dim}
+        y_num_patches: ${encoder_num_patches}
+        normalize_embeddings: ${encoder_normalize_embeddings}
+        attn_backend: ${attn_backend}
+
+# Model configuration
+model:
+  params:
+    encoder_config: ${eval:"${dit_conditional_encoder_config} if ${custom_encoder} else ${mlp_encoder_config}"}
+    model_config:
+      target: dlm.transformers.dit.dit.DiscreteDiTModel
+      params:
+        config:
+          target: dlm.transformers.dit.configuration_dit.DiTConfig
+          params:
+            mask_token_id: ${mask_token_id}
+            vocab_size: ${eval:"${vocab_size} + 1"}  # +1 for mask token
+            hidden_size: ${dit_hidden_size}
+            cond_hidden_size: ${dit_cond_hidden_size}
+            num_hidden_layers: ${dit_num_hidden_layers}
+            num_attention_heads: ${dit_num_attention_heads}
+            dropout: ${dit_dropout}
+            time_type: ${dit_time_type}
+            attn_backend: ${attn_backend}

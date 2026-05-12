@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - override /base: coladd
+  - override /data: owt/owt_qwen_512
+  - override /model: owt/coladd
+  - _self_
+
+model_size: B
+encoder_type: qwen
+freeze_encoder: true
+save_encoder: false
+pooling_strategy: adaptive_chunk_mean_eos
+patch_dim: 32
+y_num_patches: 64
+model_head_size: V
+latent_strategy:
+  fixed_sigma_latent: 0.0
+latent_loss_weight_schedule_steps: 20000
+normalize_embeddings: true
+use_p_r_label: 'true'
+effective_dim_shift_alpha: 2048
+independent_timesteps_label: 'false'
+use_rope_for_latents: true
+torch_compile: default
+attn_backend: sdpa
+ddp_find_unused_parameters: true

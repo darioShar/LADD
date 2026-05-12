@@ -1,0 +1,44 @@
+# @package _global_
+
+defaults:
+  - override /base: diladd
+  - override /data: binsaw/binsaw
+  - override /model: binsaw/diladd
+  - _self_
+
+core_model: FUJI
+model_size: XXS
+encoder_type: dit
+encoder_strategy: vqvae
+normalize_embeddings: true
+independent_timesteps: true
+vqvae_latent_dim: 32
+commitment_cost: 0.1
+vqvae_use_ema: true
+vqvae_ema_decay: 0.95
+use_cosine_sim: true
+threshold_ema_dead_code: 2
+latent_sequence_length: 1
+codebook_size: 512
+y_noise_schedule: polynomial
+use_rope_for_latents: true
+use_data_loss_elbo: true
+use_latent_loss_elbo: true
+conditional_independence_loss: false
+conditional_independence_kl_direction: forward
+conditional_independence_detach_p: true
+use_infonce_loss: false
+infonce_weight: 1.0
+infonce_temperature: 0.1
+p_mask_input_enc: 0.0
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: 2
+SEQ: true
+autoregressive: false
+use_ema: true
+ema_decay: 0.99
+torch_compile: null
+ddp_find_unused_parameters: true
+
+group: ${core_model}
+postfix: _${core_model}

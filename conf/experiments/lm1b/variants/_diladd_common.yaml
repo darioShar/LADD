@@ -1,0 +1,5 @@
+# @package _global_
+
+encoder_strategy: vqvae
+qwen_pooling_strategy: adaptive_chunk_mean
+codebook_dim: ${vqvae_latent_dim}

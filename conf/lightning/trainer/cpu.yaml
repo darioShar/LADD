@@ -1,0 +1,18 @@
+# @package lightning.trainer
+accelerator: cpu
+devices: 1
+# max_epochs: 4
+max_steps: 1000000
+precision: 32
+accumulate_grad_batches: 1
+gradient_clip_val: 1.0
+num_sanity_val_steps: 0
+val_check_interval: 2000
+log_every_n_steps: 250
+check_val_every_n_epoch: null # 10
+enable_model_summary: true
+# fast_dev_run: 5
+# profiler: simple
+limit_val_batches: 100
+# limit_train_batches: .000001
+# checkpoint_callback: false

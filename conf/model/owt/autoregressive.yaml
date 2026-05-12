@@ -1,0 +1,10 @@
+# @package _global_
+# LM1B dataset - autoregressive baseline with the Qwen tokenizer
+
+defaults:
+  - /model/autoregressive_base
+
+# Qwen/Qwen3-Embedding-0.6B uses <|endoftext|> for BOS/EOS/PAD in this repo.
+bos_token_id: 151643
+eos_token_id: 151643
+pad_token_id: 151643

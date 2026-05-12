@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - _diladd_common
+  - _self_
+
+experiment_name: binsaw_diladd
+variant_name: diladd_fuji_xxs
+
+training_stage: 1
+freeze_encoder: false
+use_encoder_latent_sampling: true
+
+log_dir: logs/models/binsaw/diladd_${core_model}_stage${training_stage}_${model_size}

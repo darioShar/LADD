@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: mdlm
+  - override /data: binsaw/binsaw
+  - override /model: binsaw/mdlm
+  - _self_
+
+experiment_name: binsaw_mdlm
+variant_name: mdlm_xs
+
+core_model: MDLM
+model_size: XS
+use_data_loss_elbo: true
+use_ema: false
+torch_compile: null
+num_inference_steps: ${sequence_length}
+
+group: ${core_model}_sampling
+postfix: _sample_${variant_name}
+train_log_dir: logs/models/binsaw/mdlm_${model_size}
+sample_log_dir: logs/models/binsaw/sampling/mdlm_${model_size}

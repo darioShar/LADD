@@ -1,0 +1,9 @@
+defaults:
+  - base: coladd
+  - data: owt/data_lightning_optim
+  - model: owt/coladd
+  - lightning/trainer: default
+  - lightning/callbacks: default
+  - lightning/strategy: ddp   # or fsdp_hf
+  - resume: off
+  - _self_

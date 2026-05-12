@@ -1,0 +1,8 @@
+# @package _global_
+# Text8 dataset - Di-LADD model (VQ-VAE)
+
+defaults:
+  - /model/diladd_base
+
+# Dataset-specific overrides
+latent_vocab_size: 10  # Smaller vocab size for text8

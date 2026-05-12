@@ -1,0 +1,4 @@
+# @package _global_
+
+from_dir: null
+ckpt_path: /absolute/or/relative/path/to/checkpoint.ckpt

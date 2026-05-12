@@ -1,0 +1,6 @@
+# @package _global_
+
+variant_name: mdlm_bl
+model_size: BL
+use_data_loss_elbo: false
+use_data_loss_elbo_label: 'false'

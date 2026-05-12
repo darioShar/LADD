@@ -1,0 +1,230 @@
+# @package _global_
+
+# Baseline config for discrete latent diffusion (x and y both discrete).
+
+# Data-provided fields
+vocab_size: null
+sequence_length: null
+mask_token_id: null
+
+# Model-provided
+codebook_size: null
+
+# Reproducibility
+seed: 42
+
+# Core model
+core_model: JOINT
+
+# Sampling/training knobs
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: ${sequence_length}
+temperature: null               # null/1.0 disable temperature sampling on x (data channel only)
+max_new_tokens: ${sequence_length}
+training_stage: 1               # 1 or 2 (loss enforces this)
+freeze_encoder: false
+save_encoder: true              # if false, exclude encoder from checkpoints (useful for large frozen encoders)
+use_precomputed_latent_sampling: false
+use_precomputed_latent_train_val: false
+use_encoder_latent_sampling: false
+use_encoder_supervision: false
+encoder_supervision_weight: 1.0
+p_cfg: 0.0
+use_p_r: false
+kl_regularization_weight: 0.0
+conditional_independence_loss: false
+conditional_independence_kl_direction: forward  # 'forward' for D_KL(P || Q), 'backward' for D_KL(Q || P)
+conditional_independence_detach_p: true  # whether to detach P in the KL loss
+
+# Sampling mode flags
+SEQ: false                      # If true, generate latents first, then data conditionally
+autoregressive: false           # If true, generate data autoregressively token-by-token
+                                # - If SEQ=true: Generate latents first, then x autoregressively conditioned on y
+                                # - If SEQ=false: Joint generation with x autoregressive and y using diffusion
+                                #   (requires num_inference_steps = num_inference_steps_latent = sequence_length)
+
+# InfoNCE two-view invariance parameters
+use_infonce_loss: false # if true, use InfoNCE contrastive loss with two-view invariance
+infonce_weight: 1.0 # weight of the InfoNCE loss
+infonce_temperature: 0.1 # temperature for InfoNCE loss (try 0.07, 0.1, 0.2)
+p_mask_input_enc: 0.0 # probability of masking tokens for encoder input corruption (two-view)
+
+independent_timesteps: false
+use_latent_loss_elbo: false
+use_data_loss_elbo: false
+data_loss_weight_stage_1: 1.0
+data_loss_weight_stage_2: 1.0
+latent_loss_weight_stage_1: 1.0
+latent_loss_weight_stage_2: 1.0
+latent_loss_weight_schedule: null
+latent_loss_weight_schedule_steps: null
+ratio_x_to_y_stage_1: null
+ratio_x_to_y_stage_2: null
+
+# Training/infra defaults
+strict_loading: false
+ddp_find_unused_parameters: false
+
+gradient_checkpointing: false
+torch_compile: null
+use_ema: true
+ema_decay: 0.9999
+eval_and_log_first_n_batches: 1
+limit_eval_batch_size: ${eval_batch_size}
+optimizer_config:
+  target: torch.optim.AdamW
+  params:
+    lr: 3e-4
+    betas: [0.9, 0.999]
+    weight_decay: 0.03
+    eps: 1e-8
+    fused: false
+scheduler_config:
+  name: constant_with_warmup
+  num_warmup_steps: 2500
+
+# Noise schedules
+x_noise_sampler_config:
+  target: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+  params:
+    eps: 1e-4
+
+y_noise_schedule: linear # polynomial, geometric, linear
+y_noise_eps: 1e-4
+y_noise_degree: 2
+y_noise_beta_min: 1e-3
+y_noise_beta_max: 20
+
+y_noise_sampler_config_targets:
+  linear: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+  polynomial: dlm.modules.diffusionmodules.noise_sampling.PolynomialSampling
+  geometric: dlm.modules.diffusionmodules.noise_sampling.GeometricSampling
+
+y_noise_sampler_config_params:
+  linear:
+    eps: ${y_noise_eps}
+  polynomial:
+    degree: ${y_noise_degree}
+  geometric:
+    beta_min: ${y_noise_beta_min}
+    beta_max: ${y_noise_beta_max}
+
+
+y_noise_sampler_config:
+  target: ${y_noise_sampler_config_targets.${y_noise_schedule}}
+  params: ${y_noise_sampler_config_params.${y_noise_schedule}}
+
+model:
+  target: dlm.models.latent.LatentDDM
+  params:
+    sequence_length: ${sequence_length}
+    vocab_size: ${eval:"${vocab_size} + 1"} # +1 for internal mask token representation
+    strict_loading: ${strict_loading}
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+    teacher_model_name_or_path: gpt2-large
+    enable_entropy: true
+    enable_generative_perplexity: true
+    enable_gradient_moment_metric: true
+    enable_sliced_wasserstein: true
+    enable_token_distribution_kl: true
+    enable_grad_norms_logging: true
+    limit_eval_batch_size: ${limit_eval_batch_size}
+    gradient_checkpointing: ${gradient_checkpointing}
+    torch_compile: ${torch_compile}
+    use_ema: ${use_ema}
+    ema_decay: ${ema_decay}
+    core_model: ${core_model}
+    freeze_encoder: ${freeze_encoder}
+    training_stage: ${training_stage}
+    on_validation_only_eval: false
+    use_k_first_input_ids_as_prompt: null
+    discrete_metrics: true
+    codebook_size: ${codebook_size}
+    
+    optimizer_config: ${optimizer_config}
+    scheduler_config: ${scheduler_config}
+    
+    # Encoder configuration: DiT Encoder
+    encoder_config: null 
+
+    # Joint denoiser configuration: DiT Joint Denoiser
+    joint_denoiser_config: null 
+
+    # Vector Quantizer configuration
+    vector_quantizer_config: null 
+
+    # No latent_denoiser in this discrete setup
+    latent_denoiser_config: null
+
+    loss_config:
+      target: dlm.modules.diffusionmodules.diladd.loss.DiscreteLatentDDMLoss
+      params:
+        ratio_x_to_y_stage_1: ${ratio_x_to_y_stage_1}
+        ratio_x_to_y_stage_2: ${ratio_x_to_y_stage_2}
+        data_loss_weight_stage_1: ${data_loss_weight_stage_1}
+        data_loss_weight_stage_2: ${data_loss_weight_stage_2}
+        latent_loss_weight_stage_1: ${latent_loss_weight_stage_1}
+        latent_loss_weight_stage_2: ${latent_loss_weight_stage_2}
+        latent_loss_weight_schedule: ${latent_loss_weight_schedule}
+        latent_loss_weight_schedule_steps: ${latent_loss_weight_schedule_steps}
+        training_stage: ${training_stage}
+        encoder_strategy: ${encoder_strategy}
+        use_precomputed_latent: ${use_precomputed_latent_train_val}
+        use_encoder_supervision: ${use_encoder_supervision}
+        encoder_supervision_weight: ${encoder_supervision_weight}
+        p_cfg: ${p_cfg}
+        use_p_r: ${use_p_r}
+        kl_regularization_weight: ${kl_regularization_weight}
+        conditional_independence_loss: ${conditional_independence_loss}
+        conditional_independence_kl_direction: ${conditional_independence_kl_direction}
+        conditional_independence_detach_p: ${conditional_independence_detach_p}
+        use_infonce_loss: ${use_infonce_loss}
+        infonce_weight: ${infonce_weight}
+        infonce_temperature: ${infonce_temperature}
+        p_mask_input_enc: ${p_mask_input_enc}
+
+        independent_timesteps: ${independent_timesteps}
+        use_data_loss_elbo: ${use_data_loss_elbo}
+        use_latent_loss_elbo: ${use_latent_loss_elbo}
+        x_kwargs:
+          noise_sampler_config: ${x_noise_sampler_config}
+          time_sampler_config:
+            target: dlm.modules.diffusionmodules.time_sampling.LowDiscrepancySampling
+            params:
+              eps: 1e-4
+          mask_token_id: ${mask_token_id}
+          shift_logits: false
+        y_kwargs:
+          noise_sampler_config: ${y_noise_sampler_config}
+          time_sampler_config:
+            target: dlm.modules.diffusionmodules.time_sampling.LowDiscrepancySampling
+            params:
+              eps: 1e-4
+          mask_token_id: ${latent_mask_token_id}
+          shift_logits: false
+
+    sampler_config:
+      target: dlm.modules.diffusionmodules.diladd.sampling.DiscreteLatentDDMSampler
+      params:
+        use_precomputed_latent: ${use_precomputed_latent_sampling}
+        use_encoder_latent: ${use_encoder_latent_sampling}
+        encoder_strategy: ${encoder_strategy}
+        temperature: ${temperature}
+        SEQ: ${SEQ}
+        autoregressive: ${autoregressive}
+        x_kwargs:
+          mask_token_id: ${mask_token_id}
+          num_inference_steps: ${num_inference_steps}
+          max_new_tokens: ${max_new_tokens}
+          noise_removal: true          # final denoise step removes mask tokens
+          discretization_config:
+            target: dlm.modules.diffusionmodules.discretization.UniformDiscretization
+          noise_sampler_config: ${x_noise_sampler_config}
+        y_kwargs:
+          mask_token_id: ${latent_mask_token_id}
+          num_inference_steps: ${num_inference_steps_latent}
+          max_new_tokens: ${y_num_patches}
+          noise_removal: true          # ensure final latent samples contain no mask tokens
+          discretization_config:
+            target: dlm.modules.diffusionmodules.discretization.UniformDiscretization
+          noise_sampler_config: ${y_noise_sampler_config}

@@ -1,0 +1,11 @@
+# conf/experiments/owt_mdlm_small.yaml
+# Compose the exact combo with one alias (optional)
+defaults:
+  - base: mdlm
+  - data: owt/data_lightning_optim
+  - model: owt/mdlm_small
+  - lightning/trainer: default
+  - lightning/callbacks: default
+  - lightning/strategy: ddp
+  - resume: off
+  - _self_

@@ -1,0 +1,16 @@
+# Top-level defaults & global knobs. Later items override earlier ones (left→right).
+defaults:
+  - _self_
+  - base: coladd
+  - data: text8/text8
+  - precompute: precompute
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+save_every_n_steps: 100
+
+
+hydra:
+  output_subdir: null  
+  run:  
+    dir: .

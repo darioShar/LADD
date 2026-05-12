@@ -1,0 +1,8 @@
+# @package _global_
+# LM1B dataset - Co-LADD model (supports both DiT and Qwen encoders)
+
+defaults:
+  - /model/coladd_base
+
+# Dataset-specific overrides
+# (Uses base defaults for all parameters)

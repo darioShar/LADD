@@ -1,0 +1,163 @@
+# @package _global_
+# Base configuration for Co-LADD models
+# This provides the common structure for Co-LADD models across all datasets
+
+defaults:
+  - dit_sizes
+
+# Model size: S, B, L, or XL
+model_size: B
+
+# Latent shape
+patch_dim: 16
+y_num_patches: ${sequence_length}
+y_latent_dim: ${eval:"${patch_dim} * ${y_num_patches}"}
+
+# Encoder (pretrained embeddings)
+qwen_embedding_model: "Qwen/Qwen3-Embedding-0.6B"
+bert_embedding_model: "bert-base-uncased"
+normalize_embeddings: true
+pooling_strategy: last_layer
+
+# Sampling parameters
+num_inference_steps_latent: ${y_num_patches}
+
+# Default for backbone
+dit_dropout: 0.1
+dit_x_time_type: none
+dit_y_time_type: time
+soft_inputs: true
+attn_backend: sdpa  # auto | flash | sdpa
+
+# Hybrid positional encoding strategy
+# If true: RoPE applied to both text (x) and latent (y) streams
+# If false: RoPE only for text (x), learned absolute slot embeddings for latents (y)
+use_rope_for_latents: true
+
+# Encoder type selection
+encoder_type: dit  # options: qwen, bert, dit
+
+# Head configuration - use centralized sizes from dit_sizes.yaml
+# V = void (no head) for DiT encoder, G = giant for Qwen encoder
+model_head_size_configs:
+  dit: V
+  qwen: G
+  bert: G
+
+model_head_size: ${model_head_size_configs.${encoder_type}}
+
+# Encoder configurations
+
+# Encoder time configuration (no time conditioning for encoder)
+encoder_x_time_type: none
+encoder_y_time_type: none
+
+dit_encoder_config:
+  target: dlm.transformers.dit.latent_dit.EncoderDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}
+        hidden_size: ${dit_hidden_size}
+        cond_hidden_size: ${dit_cond_hidden_size}
+        num_hidden_layers: ${dit_num_hidden_layers}
+        num_attention_heads: ${dit_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: ${encoder_x_time_type}
+        y_time_type: ${encoder_y_time_type}
+        y_latent_dim: ${y_latent_dim}
+        y_num_patches: ${y_num_patches}
+        normalize_embeddings: ${normalize_embeddings}
+        max_sequence_length: ${sequence_length}
+        attn_backend: ${attn_backend}
+
+qwen_encoder_config:
+  target: dlm.transformers.qwen3dit.qwen_embedding.QwenEmbeddingModel
+  params:
+    pretrained_model_name_or_path: ${qwen_embedding_model}
+    y_latent_dim: ${y_latent_dim}
+    y_latent_len: ${y_num_patches}
+    freeze: ${freeze_encoder}
+    trust_remote_code: true
+    local_files_only: ${hf_local_files_only}
+    normalize_embeddings: ${normalize_embeddings}
+    pooling_strategy: ${pooling_strategy}
+    attn_backend: ${attn_backend}
+
+bert_encoder_config:
+  target: dlm.transformers.bert.bert_embedding.BertEmbeddingModel
+  params:
+    pretrained_model_name_or_path: ${bert_embedding_model}
+    y_latent_dim: ${y_latent_dim}
+    y_latent_len: ${y_num_patches}
+    freeze: ${freeze_encoder}
+    local_files_only: ${hf_local_files_only}
+    normalize_embeddings: ${normalize_embeddings}
+    pooling_strategy: ${pooling_strategy}
+
+# Joint denoiser configuration: Predicts x_0, y_0 from x_t, y_s, t, s
+mm_dit_joint_denoiser_config:
+  target: dlm.transformers.dit.latent_dit.JointDiscreteDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}
+        hidden_size: ${dit_hidden_size}
+        cond_hidden_size: ${dit_cond_hidden_size}
+        num_hidden_layers: ${dit_num_hidden_layers}
+        num_attention_heads: ${dit_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: ${dit_x_time_type}
+        y_time_type: ${dit_y_time_type}
+        y_latent_dim: ${y_latent_dim}
+        y_num_patches: ${y_num_patches}
+        max_sequence_length: ${sequence_length}
+        soft_inputs: ${soft_inputs}
+        head_hidden_size: ${dit_head_hidden_size}
+        head_num_layers: ${dit_head_num_layers}
+        head_num_attention_heads: ${dit_head_num_attention_heads}
+        attn_backend: ${attn_backend}
+        use_rope_for_latents: ${use_rope_for_latents}
+
+# Latent denoiser configuration: Predicts y_0 from y_t
+dit_latent_denoiser_config:
+  target: dlm.transformers.dit.latent_dit.ContinuousDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}
+        hidden_size: ${dit_hidden_size}
+        cond_hidden_size: ${dit_cond_hidden_size}
+        num_hidden_layers: ${dit_num_hidden_layers}
+        num_attention_heads: ${dit_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: ${dit_x_time_type}
+        y_time_type: ${dit_y_time_type}
+        y_latent_dim: ${y_latent_dim}
+        y_num_patches: ${y_num_patches}
+        max_sequence_length: ${sequence_length}
+        attn_backend: ${attn_backend}
+        soft_inputs: ${soft_inputs}
+        head_hidden_size: ${dit_head_hidden_size}
+        head_num_layers: ${dit_head_num_layers}
+        head_num_attention_heads: ${dit_head_num_attention_heads}
+
+
+# Model configuration - selects encoder based on encoder_type
+encoder_config_map:
+  dit: ${dit_encoder_config}
+  qwen: ${qwen_encoder_config}
+  bert: ${bert_encoder_config}
+
+
+model:
+  params:
+    encoder_config: ${encoder_config_map.${encoder_type}}
+    joint_denoiser_config: ${mm_dit_joint_denoiser_config}
+    latent_denoiser_config: ${dit_latent_denoiser_config}

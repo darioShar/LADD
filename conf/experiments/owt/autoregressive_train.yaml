@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - override /base: autoregressive
+  - override /data: owt/owt_qwen_512
+  - override /model: owt/autoregressive
+  - _self_
+
+experiment_name: owt_autoregressive
+variant_name: autoregressive_bl
+
+group: ${core_model}
+postfix: _${core_model}
+
+core_model: AR
+model_size: BL
+torch_compile: max-autotune-no-cudagraphs
+
+log_dir: logs/models/owt/ar_owt_${model_size}

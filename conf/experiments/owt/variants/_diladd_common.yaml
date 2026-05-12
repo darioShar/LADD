@@ -1,0 +1,6 @@
+# @package _global_
+
+qwen_pooling_strategy: adaptive_chunk_mean_eos
+codebook_size: 8192
+vqvae_latent_dim: 128
+codebook_dim: ${vqvae_latent_dim}

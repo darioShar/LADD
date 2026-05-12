@@ -1,0 +1,22 @@
+# @package _global_
+# Binary SAW dataset - Co-LADD model
+
+defaults:
+  - /model/coladd_base
+
+model_size: XS
+
+# Dataset-specific overrides
+# Binary SAW uses a single 32-dimensional latent (single patch)
+patch_dim: 32
+y_num_patches: 1
+
+
+ema_decay: 0.99
+encoder_type: dit
+
+# Model overrides
+model:
+  params:
+    enable_generative_perplexity: false
+    enable_gradient_moment_metric: false

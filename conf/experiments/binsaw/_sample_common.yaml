@@ -1,0 +1,22 @@
+# @package _global_
+
+experiment_stage: sample
+
+mode: val
+projectname: binsaw_sampling
+fork_log: true
+
+batch_size: 2048
+eval_batch_size: ${batch_size}
+num_workers: 2
+eval_and_log_first_n_batches: 10
+
+resume:
+  from_dir: ${train_log_dir}
+
+paths:
+  log_root: ${sample_log_dir}
+
+model:
+  params:
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}

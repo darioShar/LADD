@@ -1,0 +1,29 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - _diladd_common
+  - _self_
+
+experiment_name: owt_diladd_stage_2_resume
+variant_name: diladd_lat64_cb8192_dim128
+
+group: diladd
+postfix: _diladd
+
+torch_compile: max-autotune-no-cudagraphs
+
+log_dir: logs/models/owt/diladd_${model_size}_${codebook_size}_${vqvae_latent_dim}_${latent_sequence_length}
+
+resume:
+  # Stage 2 continues from the matching stage-1 log root; hydra_main.py picks
+  # the latest timestamped run under this parent unless resume.ckpt_path is set.
+  from_dir: ${log_dir}
+
+lightning:
+  trainer:
+    max_steps: 1000000
+
+model:
+  params:
+    eval_and_log_first_n_batches: 1

@@ -1,0 +1,29 @@
+# @package _global_
+
+defaults:
+  - override /base: diladd
+  - override /data: lm1b/lm1b_qwen_packed
+  - override /model: lm1b/diladd
+  - _self_
+
+model_size: B
+encoder_type: qwen
+freeze_encoder: true
+save_encoder: false
+training_stage: 2
+normalize_embeddings: false
+encoder_strategy: vqvae
+qwen_pooling_strategy: adaptive_chunk_mean_eos
+codebook_size: 512
+vqvae_latent_dim: 32
+codebook_dim: 32
+latent_sequence_length: 128
+commitment_cost: 0.1
+vqvae_use_ema: true
+vqvae_ema_decay: 0.95
+use_cosine_sim: true
+threshold_ema_dead_code: 2
+independent_timesteps: true
+use_rope_for_latents: true
+torch_compile: default
+ddp_find_unused_parameters: true

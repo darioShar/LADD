@@ -1,0 +1,4 @@
+# @package lightning.strategy
+target: lightning.pytorch.strategies.DDPStrategy
+params:
+  find_unused_parameters: ${ddp_find_unused_parameters}

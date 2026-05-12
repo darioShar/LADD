@@ -1,0 +1,6 @@
+# @package resume
+
+from_dir: null   # can be a Lightning logdir OR a .ckpt file; off by default
+ckpt_path: null  # if set, it takes precedence over from_dir
+ckpt_steps: null # if set with from_dir, load epoch checkpoint whose filename has step=<value>
+ckpt_epochs: null # if set with from_dir, load epoch checkpoint whose filename has epoch=<value>

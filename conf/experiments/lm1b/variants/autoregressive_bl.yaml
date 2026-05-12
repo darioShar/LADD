@@ -1,0 +1,5 @@
+# @package _global_
+
+variant_name: autoregressive_bl
+model_size: BL
+core_model: AR

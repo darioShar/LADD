@@ -1,0 +1,20 @@
+# @package _global_
+
+experiment_stage: train
+
+mode: train
+projectname: owt
+
+paths:
+  log_root: ${log_dir}
+
+lightning:
+  trainer:
+    accumulate_grad_batches: ${accumulate_grad_batches}
+    val_check_interval: ${eval:"20000 * ${accumulate_grad_batches}"}
+    limit_val_batches: 100
+  callbacks:
+    model_checkpoint_callback:
+      params:
+        save_top_k: -1
+        every_n_train_steps: 20000

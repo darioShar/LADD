@@ -1,0 +1,25 @@
+# @package _global_
+
+defaults:
+  - override /base: coladd
+  - override /data: lm1b/lm1b_qwen_packed
+  - override /model: lm1b/coladd
+  - _self_
+
+model_size: B
+encoder_type: qwen
+freeze_encoder: true
+save_encoder: false
+pooling_strategy: last_layer
+patch_dim: 32
+y_num_patches: ${sequence_length}
+model_head_size: V
+latent_strategy:
+  fixed_sigma_latent: 0.0
+latent_loss_weight_schedule_steps: 20000
+normalize_embeddings: true
+use_p_r_label: ${eval:"'true' if ${use_p_r} else 'false'"}
+independent_timesteps_label: ${eval:"'true' if ${independent_timesteps} else 'false'"}
+use_rope_for_latents: true
+torch_compile: default
+ddp_find_unused_parameters: true

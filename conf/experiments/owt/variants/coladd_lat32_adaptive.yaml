@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - /experiments/owt/variants/_coladd_common
+  - _self_
+
+variant_name: coladd_lat32_adaptive
+y_num_patches: 32

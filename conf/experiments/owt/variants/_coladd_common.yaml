@@ -1,0 +1,5 @@
+# @package _global_
+
+pooling_strategy: adaptive_chunk_mean_eos
+patch_dim: 32
+model_head_size: V

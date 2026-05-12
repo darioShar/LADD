@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - override /base: mdlm
+  - override /data: owt/owt_qwen_512
+  - override /model: owt/mdlm
+  - _self_
+
+experiment_name: owt_mdlm
+variant_name: mdlm_bl
+
+group: ${core_model}
+postfix: _${core_model}
+
+core_model: MDLM
+model_size: BL
+num_inference_steps: ${sequence_length}
+use_data_loss_elbo: false
+use_data_loss_elbo_label: 'false'
+torch_compile: max-autotune-no-cudagraphs
+
+log_dir: logs/models/owt/elbo_${use_data_loss_elbo_label}_mdlm_owt_${model_size}

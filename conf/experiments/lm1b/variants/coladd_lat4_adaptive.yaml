@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - /experiments/lm1b/variants/_coladd_common
+  - _self_
+
+variant_name: coladd_lat4_adaptive
+y_num_patches: 4
+pooling_strategy: adaptive_chunk_mean

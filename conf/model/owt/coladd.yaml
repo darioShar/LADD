@@ -1,0 +1,5 @@
+# @package _global_
+# OpenWebText dataset - Co-LADD model (supports both DiT and Qwen encoders)
+
+defaults:
+  - /model/coladd_base

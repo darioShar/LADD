@@ -1,0 +1,5 @@
+# @package _global_
+
+# Point to a Lightning logdir; main.py will pick the latest ckpt in there.
+from_dir: /path/to/logdir
+ckpt_path: null

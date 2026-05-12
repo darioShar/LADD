@@ -1,0 +1,28 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: mdlm
+  - override /data: owt/owt_qwen_512
+  - override /model: owt/mdlm
+  - _self_
+
+experiment_name: owt_mdlm
+variant_name: mdlm_bl
+
+group: mdlm_sampling
+postfix: _${variant_name}_temp${temperature}
+
+core_model: MDLM
+model_size: BL
+num_inference_steps: [2, 8, 32, 128, 512]
+use_data_loss_elbo: false
+use_data_loss_elbo_label: 'false'
+torch_compile: default
+
+train_log_dir: logs/models/owt/elbo_${use_data_loss_elbo_label}_mdlm_owt_${model_size}
+sample_log_dir: logs/models/owt/sampling/mdlm/temperature_${temperature}_elbo_${use_data_loss_elbo_label}_mdlm_owt_${model_size}
+
+lightning:
+  trainer:
+    precision: 16

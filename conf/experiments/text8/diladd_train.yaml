@@ -1,0 +1,43 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - _diladd_common
+  - _self_
+
+experiment_name: text8_diladd
+variant_name: diladd_mask_025_lat16_cb4096_dim128
+
+group: ${core_model}
+postfix: _${core_model}
+
+training_stage: 2
+freeze_encoder: true
+conditional_independence_loss: false
+conditional_independence_kl_direction: forward
+conditional_independence_detach_p: true
+use_infonce_loss: false
+infonce_weight: 1.0
+infonce_temperature: 0.1
+p_mask_input_enc: 0.25
+use_encoder_latent_sampling: false
+use_precomputed_latent_sampling: false
+use_precomputed_latent_train_val: false
+use_encoder_supervision: false
+num_inference_steps_latent: 64
+SEQ_label: 'true'
+
+run_name: only_mask_input_${p_mask_input_enc}_lddm_${model_size}_${codebook_size}_${vqvae_latent_dim}_${latent_sequence_length}_${y_noise_schedule}
+log_dir: logs/models/text8/stage_2_freeze_enc_SEQsampling${SEQ_label}_${run_name}
+
+lightning:
+  trainer:
+    val_check_interval: 5000
+  callbacks:
+    model_checkpoint_callback:
+      params:
+        every_n_train_steps: 20000
+
+model:
+  params:
+    eval_and_log_first_n_batches: 4

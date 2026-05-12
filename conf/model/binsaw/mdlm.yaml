@@ -1,0 +1,16 @@
+# @package _global_
+# Binary SAW dataset - MDLM model
+
+defaults:
+  - /model/base
+
+model_size: XS
+
+# Dataset-specific overrides
+ema_decay: 0.99
+
+# Model overrides
+model:
+  params:
+    enable_generative_perplexity: false
+    enable_gradient_moment_metric: false

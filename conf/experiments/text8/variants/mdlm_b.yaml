@@ -1,0 +1,7 @@
+# @package _global_
+
+variant_name: mdlm_b
+model_size: B
+core_model: MDLM
+use_data_loss_elbo: true
+torch_compile: default

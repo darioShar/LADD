@@ -1,0 +1,40 @@
+# @package _global_
+# Base configuration for autoregressive GPT-style models
+
+defaults:
+  - dit_sizes
+
+# Model size: XXS, XS, S, B, BL, L, XL, XXL, H, G, T
+model_size: B
+
+gpt2_dropout: 0.1
+
+ar_hidden_size: ${dit_sizes.${model_size}.hidden_size}
+ar_num_hidden_layers: ${dit_sizes.${model_size}.num_hidden_layers}
+ar_num_attention_heads: ${dit_sizes.${model_size}.num_attention_heads}
+
+bos_token_id: null
+eos_token_id: null
+pad_token_id: null
+
+model:
+  params:
+    model_config:
+      target: transformers.GPT2LMHeadModel
+      params:
+        config:
+          target: transformers.GPT2Config
+          params:
+            vocab_size: ${eval:"${vocab_size} + 1"}
+            n_positions: ${sequence_length}
+            n_ctx: ${sequence_length}
+            n_embd: ${ar_hidden_size}
+            n_layer: ${ar_num_hidden_layers}
+            n_head: ${ar_num_attention_heads}
+            n_inner: ${eval:"4 * ${ar_hidden_size}"}
+            resid_pdrop: ${gpt2_dropout}
+            embd_pdrop: ${gpt2_dropout}
+            attn_pdrop: ${gpt2_dropout}
+            bos_token_id: ${bos_token_id}
+            eos_token_id: ${eos_token_id}
+            pad_token_id: ${pad_token_id}

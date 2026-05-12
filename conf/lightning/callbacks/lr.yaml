@@ -1,0 +1,5 @@
+# @package lightning.callbacks
+learning_rate_logger:
+  target: lightning.pytorch.callbacks.LearningRateMonitor
+  params:
+    logging_interval: step

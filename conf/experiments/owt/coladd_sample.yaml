@@ -1,0 +1,17 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - _coladd_common
+  - _self_
+
+experiment_name: owt_coladd
+variant_name: coladd_lat64_adaptive
+
+group: coladd_sampling
+postfix: _${variant_name}_temperature${temperature}
+
+num_inference_steps: [2, 8, 32, 128, 512]
+
+train_log_dir: logs/models/owt/coladd_${model_size}_${y_num_patches}_${patch_dim}_pool_${pooling_strategy}_p_r_${use_p_r_label}_ind_${independent_timesteps_label}
+sample_log_dir: logs/models/owt/sampling/coladd/temperature_${temperature}_coladd_${model_size}_${y_num_patches}_${patch_dim}_pool_${pooling_strategy}_p_r_${use_p_r_label}_ind_${independent_timesteps_label}

@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - _diladd_common
+  - _self_
+
+experiment_name: owt_diladd
+variant_name: diladd_lat64_cb8192_dim128
+
+group: diladd_sampling
+postfix: _${variant_name}_temp${temperature}
+
+num_inference_steps: [2, 8, 32, 128, 512]
+
+train_log_dir: logs/models/owt/diladd_${model_size}_${codebook_size}_${vqvae_latent_dim}_${latent_sequence_length}
+sample_root_dir: logs/models/owt/sampling/diladd
+sample_log_dir: ${sample_root_dir}/temperature_${temperature}_diladd_${model_size}_${codebook_size}_${vqvae_latent_dim}_${latent_sequence_length}

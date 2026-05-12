@@ -1,0 +1,10 @@
+# @package _global_
+
+defaults:
+  - /experiments/lm1b/variants/_diladd_common
+  - _self_
+
+variant_name: diladd_lat32_cb2048_dim128
+latent_sequence_length: 32
+codebook_size: 2048
+vqvae_latent_dim: 128

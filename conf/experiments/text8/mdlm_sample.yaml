@@ -1,0 +1,25 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: mdlm
+  - override /data: text8/text8
+  - override /model: text8/mdlm
+  - _self_
+
+experiment_name: text8_mdlm
+variant_name: mdlm_b
+
+group: ${core_model}_sampling
+postfix: _sample_${variant_name}
+
+model_size: B
+core_model: MDLM
+sequence_length: 128
+num_inference_steps: ${sequence_length}
+use_data_loss_elbo: true
+torch_compile: default
+eval_and_log_first_n_batches: 2
+
+train_log_dir: logs/models/text8/mdlm_text8_${model_size}
+sample_log_dir: logs/models/text8/sampling/mdlm_text8_${model_size}

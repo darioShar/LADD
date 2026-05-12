@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - override /base: coladd
+  - override /data: text8/text8
+  - override /model: text8/coladd
+  - _self_
+
+core_model: SEQ
+model_size: B
+training_stage: 1
+encoder_type: dit
+patch_dim: 1024
+y_num_patches: 16
+all_zero_latent: true
+normalize_embeddings: false
+independent_timesteps: true
+y_noise_schedule: linear
+use_rope_for_latents: false
+use_encoder_latent_sampling: true

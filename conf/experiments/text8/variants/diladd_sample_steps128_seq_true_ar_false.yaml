@@ -1,0 +1,7 @@
+# @package _global_
+
+variant_name: diladd_sample_steps128_seq_true_ar_false
+num_inference_steps: 128
+num_inference_steps_latent: 128
+SEQ: true
+autoregressive: false

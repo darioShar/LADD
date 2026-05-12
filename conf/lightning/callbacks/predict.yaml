@@ -1,0 +1,5 @@
+# @package lightning.predict_callbacks
+save_prediction_callback:
+  target: dlm.callbacks.save_prediction_callback.SavePredictionCallback
+  params:
+    generated_samples_dir: './logs/generated_samples/'

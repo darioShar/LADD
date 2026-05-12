@@ -1,0 +1,13 @@
+# @package lightning.strategy
+
+# Uses your custom wrapper: dlm.lightning.fsdp_huggingface(model=..., **params)
+target: dlm.lightning.fsdp_huggingface
+params:
+  # Typical knobs; tune to your wrapper’s signature
+  sharding_strategy: FULL_SHARD      # FULL_SHARD | SHARD_GRAD_OP | NO_SHARD
+  use_orig_params: true
+  limit_all_gathers: true
+  cpu_offload: false
+  # auto_wrap_policy: transformer
+  # activation_checkpointing: false
+  # sync_module_states: true

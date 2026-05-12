@@ -1,0 +1,8 @@
+# @package _global_
+
+defaults:
+  - /experiments/text8/variants/_diladd_common
+  - _self_
+
+variant_name: diladd_mask_050_lat16_cb4096_dim128
+p_mask_input_enc: 0.5

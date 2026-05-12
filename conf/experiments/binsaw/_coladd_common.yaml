@@ -1,0 +1,50 @@
+# @package _global_
+
+defaults:
+  - override /base: coladd
+  - override /data: binsaw/binsaw
+  - override /model: binsaw/coladd
+  - _self_
+
+core_model: SEQ
+model_size: XXS
+encoder_type: dit
+dit_dropout: 0.0
+patch_dim: 32
+y_num_patches: 1
+all_zero_latent: false
+normalize_embeddings: false
+independent_timesteps: false
+x_noise_schedule: linear
+y_noise_schedule: sqrt
+prediction_type: y_0
+use_data_loss_elbo: true
+use_latent_loss_elbo: false
+p_cfg: 0.0
+use_p_r: false
+use_encoder_supervision: false
+use_precomputed_latent_train_val: false
+use_precomputed_latent_sampling: false
+conditional_independence_loss: false
+use_infonce_loss: false
+infonce_weight: 1.0
+infonce_temperature: 0.1
+p_mask_input_enc: 0.0
+use_rope_for_latents: true
+kl_regularization_weight: 0.0
+latent_strategy:
+  variance: null
+  fixed_sigma_latent: 1e-5
+latent_loss_weight_schedule: null
+latent_loss_weight_schedule_steps: null
+data_loss_weight_stage_2: 1.0
+latent_loss_weight_stage_2: 1.0
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: ${num_inference_steps}
+use_ema: true
+ema_decay: 0.99
+torch_compile: null
+ddp_find_unused_parameters: true
+
+group: ${core_model}
+postfix: _${core_model}

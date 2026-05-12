@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: autoregressive
+  - override /data: lm1b/lm1b_qwen_packed
+  - override /model: lm1b/autoregressive
+  - _self_
+
+experiment_name: lm1b_autoregressive
+variant_name: autoregressive_bl
+
+group: autoregressive_sampling
+postfix: _${variant_name}_temp${temperature}
+
+core_model: AR
+model_size: BL
+torch_compile: default
+
+train_log_dir: logs/models/lm1b/ar_lm1b_${model_size}
+sample_log_dir: logs/models/lm1b/sampling/temperature_${temperature}_ar_lm1b_${model_size}
+
+model:
+  params:
+    generation_config:
+      temperature: ${temperature}
+      max_length: ${sequence_length}

@@ -1,0 +1,25 @@
+# @package _global_
+
+variant_name: mdlm_debug_256
+model_size: B
+core_model: MDLM
+sequence_length: 256
+num_inference_steps: 256
+use_data_loss_elbo: true
+x_noise_schedule: linear
+dit_dropout: 0.1
+optimizer_config:
+  params:
+    lr: 0.0003
+    weight_decay: 0.03
+use_ema: true
+ema_decay: 0.999
+scheduler_config:
+  name: constant_with_warmup
+  num_warmup_steps: 2000
+torch_compile: max-autotune-no-cudagraphs
+attn_backend: sdpa
+lightning:
+  trainer:
+    precision: 16-mixed
+    limit_val_batches: 100

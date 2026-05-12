@@ -1,0 +1,9 @@
+# @package _global_
+# OpenWebText dataset - MD4 model (MDLM with conditional encoder)
+
+defaults:
+  - /model/base
+
+dit_time_type: none
+# Dataset-specific overrides
+dit_dropout: 0.02

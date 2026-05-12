@@ -1,0 +1,19 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - _coladd_common
+  - _self_
+
+experiment_name: text8_coladd
+variant_name: coladd_all_zero_no_rope
+
+group: ${core_model}_sampling
+postfix: _sample_${variant_name}
+
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: ${num_inference_steps}
+eval_and_log_first_n_batches: 4
+
+train_log_dir: logs/models/text8/all_zero_no_rope_lddm_${core_model}
+sample_log_dir: logs/models/text8/sampling/all_zero_no_rope_lddm_${core_model}

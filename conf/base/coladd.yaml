@@ -1,0 +1,231 @@
+# @package _global_
+
+# Custom configuration for Latent Discrete Diffusion Model (LatentDDM)
+
+# Data-provided fields
+vocab_size: null # to be defined by data
+sequence_length: null # to be defined by data
+mask_token_id: null # to be defined by data
+
+# Reproducibility
+seed: 42
+
+# Latent shape (set in model config)
+y_latent_dim: null
+y_num_patches: null
+
+# Generative model type
+core_model: JOINT # JOINT, SEQ
+latent_strategy:
+  variance: null # fixed/learnable/null
+  fixed_sigma_latent: 1e-5
+  learnable_sigma_min: 1e-5
+  learnable_sigma_max: 1
+independent_timesteps: false
+all_zero_latent: false # if true, use all-zero latent vectors (for ablation)
+
+# Sampling parameters
+use_precomputed_latent_sampling: false
+num_inference_steps: ${sequence_length}
+num_inference_steps_latent: ${sequence_length}
+temperature: null # temperature scale; null disables temperature
+use_encoder_latent_sampling: false # precomputed_latents takes precedence over computing encoder_latent at sampling time
+use_k_first_input_ids_as_prompt: null # if not null, use the first k tokens as prompt (for conditional generation)
+max_new_tokens: ${sequence_length}
+ddim: true
+
+# Training parameters
+# stage1: freeze denoiser_y, trainencoder/decoder_x reconstruction, stage2: train all, focus on denoiser_y modelisation
+training_stage: 2
+use_precomputed_latent_train_val: false # if true, use precomputed latents for training and validation
+freeze_encoder: false # if true, freeze the encoder during training
+save_encoder: true # if false, exclude encoder from checkpoints (useful for large frozen encoders like Qwen)
+use_encoder_supervision: false # if true, use true latent, if given, to supervise the encoder
+encoder_supervision_weight: 1.0 # weight of the encoder supervision loss
+p_cfg: 0.15 # if >0, drop labels during training (for classifier-free guidance)
+use_p_r: true # if true, drop tokens in the latent encoder input with probability p_r
+use_p_r_eval: false # if true, also apply p_r during validation/evaluation
+kl_regularization_weight: 0. # weight of the KL regularization term (if any)
+conditional_independence_loss: false # if true, add a loss term to enforce alignment between P = denoiser given x, y and Q = denoiser given y only.
+conditional_independence_kl_direction: forward  # 'forward' for D_KL(P || Q), 'backward' for D_KL(Q || P)
+conditional_independence_detach_p: true  # whether to detach P in the KL loss
+
+# InfoNCE two-view invariance parameters
+use_infonce_loss: false # if true, use InfoNCE contrastive loss with two-view invariance
+infonce_weight: 1.0 # weight of the InfoNCE loss
+infonce_temperature: 0.1 # temperature for InfoNCE loss (try 0.07, 0.1, 0.2)
+p_mask_input_enc: 0.0 # probability of masking tokens for encoder input corruption (two-view)
+
+# Training ratios
+ratio_x_to_y_stage_1: null # [x, y] x steps for denoising_x loss (reconstruction), y steps for denoising_y loss (modelisation) (stage 1)
+ratio_x_to_y_stage_2: null # [x, y] x steps for denoising_x loss (reconstruction), y steps for denoising_y loss (modelisation) (stage 2)
+data_loss_weight_stage_1: 1.
+data_loss_weight_stage_2: 1.
+latent_loss_weight_stage_1: 1. # controls modelisation loss during stage 1 (should be smaller) -> for the moment we just deactivated it (hardcoded)
+latent_loss_weight_stage_2: 1. # controls modelisation loss during stage 2 (should be larger)
+latent_loss_weight_schedule: null
+latent_loss_weight_schedule_steps: null
+use_data_loss_elbo: false
+use_latent_loss_elbo: false
+effective_dim_shift_alpha: null # null # if not null, use effective dimension shift for time sampling
+
+# Training/infra defaults
+gradient_checkpointing: false
+torch_compile: null
+use_ema: true
+ema_decay: 0.9999
+eval_and_log_first_n_batches: 1
+limit_eval_batch_size: ${eval_batch_size}
+optimizer_config:
+  target: torch.optim.AdamW
+  params:
+    lr: 3e-4
+    betas: [0.9, 0.999]
+    weight_decay: 0.03
+    eps: 1e-8
+    fused: false
+scheduler_config:
+  name: constant_with_warmup
+  num_warmup_steps: 2500
+
+strict_loading: false # whether to strictly load model weights
+ddp_find_unused_parameters: false # whether to set find_unused_parameters=True
+
+# Noise schedule
+x_noise_schedule: linear # linear, loglinear
+y_noise_schedule: sqrt # cosine, sqrt, (linear?)
+y_noise_poly_power: 2
+prediction_type: y_0 # y_0, eps
+
+x_noise_sampler_config_targets:
+  linear: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+  loglinear: dlm.modules.diffusionmodules.noise_sampling.SigmaLogLinearSampling
+
+y_noise_sampler_config_targets:
+  cosine: dlm.modules.diffusionmodules.continuous_noise_sampling.CosineContinuousNoiseSampling
+  linear: dlm.modules.diffusionmodules.continuous_noise_sampling.LinearContinuousNoiseSampling
+  sqrt: dlm.modules.diffusionmodules.continuous_noise_sampling.SqrtContinuousNoiseSampling
+  poly: dlm.modules.diffusionmodules.continuous_noise_sampling.PolynomialContinuousNoiseSampling
+
+
+
+# Mapping from core_model to its implementation class
+core_model_type:
+  JOINT: dlm.modules.diffusionmodules.coladd.latentprocess.JointProcess
+  SEQ: dlm.modules.diffusionmodules.coladd.latentprocess.SEQProcess
+
+
+# Core model parameters
+core_model_params:
+  y_latent_dim: ${y_latent_dim}
+  mask_token_id: ${mask_token_id}
+  training_stage: ${training_stage}
+  x_noise_sampler_config:
+    target: ${x_noise_sampler_config_targets.${x_noise_schedule}}
+    params:
+      eps: 1e-4
+  y_noise_sampler_config:
+    target: ${y_noise_sampler_config_targets.${y_noise_schedule}}
+    params:
+      eps: 1e-4
+      power: ${y_noise_poly_power}
+  latent_strategy: ${latent_strategy} # variance: fixed/learnable/null
+  prediction_type: ${prediction_type} # y_0, eps
+  ddim: ${ddim}
+  all_zero_latent: ${all_zero_latent} # if true, use all-zero latent vectors (for ablation)
+
+model:
+  target: dlm.models.latent.LatentDDM # New Lightning Module
+  params:
+    sequence_length: ${sequence_length}
+    vocab_size: ${eval:"${vocab_size} + 1"} # +1 for internal mask token representation
+    strict_loading: ${strict_loading}
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+    limit_eval_batch_size: ${limit_eval_batch_size}
+    gradient_checkpointing: ${gradient_checkpointing}
+    torch_compile: ${torch_compile}
+    use_ema: ${use_ema}
+    ema_decay: ${ema_decay}
+    core_model: ${core_model}
+    freeze_encoder: ${freeze_encoder}
+    save_encoder: ${save_encoder}
+    training_stage: ${training_stage}
+    use_k_first_input_ids_as_prompt: ${use_k_first_input_ids_as_prompt} # if not null, use the first k tokens as prompt (for conditional generation)
+    optimizer_config: ${optimizer_config}
+    scheduler_config: ${scheduler_config}
+    teacher_model_name_or_path: gpt2-large
+    
+    # Evaluation metrics
+    enable_entropy: true
+    enable_generative_perplexity: true
+    enable_gradient_moment_metric: true
+    enable_sliced_wasserstein: true
+    enable_token_distribution_kl: true
+    on_validation_only_eval: false
+    enable_grad_norms_logging: true
+
+    # Model configurations (to be filled in specific model configs)
+    encoder_config: null
+    joint_denoiser_config: null
+    latent_denoiser_config: null
+
+
+    # Loss configuration
+    loss_config:
+      target: dlm.modules.diffusionmodules.coladd.loss.LatentDDMLoss # New loss function
+      params:
+        mask_token_id: ${mask_token_id}
+        data_loss_weight_stage_1: ${data_loss_weight_stage_1}
+        data_loss_weight_stage_2: ${data_loss_weight_stage_2}
+        use_data_loss_elbo: ${use_data_loss_elbo}
+        use_latent_loss_elbo: ${use_latent_loss_elbo}
+        latent_loss_weight_stage_1: ${latent_loss_weight_stage_1}
+        latent_loss_weight_stage_2: ${latent_loss_weight_stage_2}
+        latent_loss_weight_schedule: ${latent_loss_weight_schedule}
+        latent_loss_weight_schedule_steps: ${latent_loss_weight_schedule_steps}
+        core_model_config:
+          target: ${core_model_type.${core_model}}
+          params: ${core_model_params}
+        ratio_x_to_y_stage_1: ${ratio_x_to_y_stage_1}
+        ratio_x_to_y_stage_2: ${ratio_x_to_y_stage_2}
+        training_stage: ${training_stage}
+        use_precomputed_latent: ${use_precomputed_latent_train_val}
+        use_encoder_supervision: ${use_encoder_supervision}
+        encoder_supervision_weight: ${encoder_supervision_weight}
+        p_cfg: ${p_cfg}
+        use_p_r: ${use_p_r}
+        use_p_r_eval: ${use_p_r_eval}
+        kl_regularization_weight: ${kl_regularization_weight}
+        conditional_independence_loss: ${conditional_independence_loss}
+        conditional_independence_kl_direction: ${conditional_independence_kl_direction}
+        conditional_independence_detach_p: ${conditional_independence_detach_p}
+        independent_timesteps: ${independent_timesteps}
+        use_infonce_loss: ${use_infonce_loss}
+        infonce_weight: ${infonce_weight}
+        infonce_temperature: ${infonce_temperature}
+        p_mask_input_enc: ${p_mask_input_enc}
+
+        time_sampler_config:
+          target: dlm.modules.diffusionmodules.time_sampling.LowDiscrepancySampling
+          params:
+            eps: 1e-4
+            effective_dim_shift_alpha: ${effective_dim_shift_alpha}
+
+    # Sampler configuration
+    sampler_config:
+      target: dlm.modules.diffusionmodules.coladd.sampling.LatentDDMSampler # New sampler
+      params:
+        core_model_config:
+          target: ${core_model_type.${core_model}}
+          params: ${core_model_params}
+        use_precomputed_latent: ${use_precomputed_latent_sampling}
+        num_inference_steps: ${num_inference_steps}
+        num_inference_steps_latent: ${num_inference_steps_latent}
+        temperature: ${temperature}
+        use_encoder_latent: ${use_encoder_latent_sampling}
+        enable_caching: false
+        noise_removal: true
+        mask_token_id: ${mask_token_id}
+        max_new_tokens: ${max_new_tokens}
+        discretization_config:
+          target: dlm.modules.diffusionmodules.discretization.UniformDiscretization

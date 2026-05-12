@@ -1,0 +1,26 @@
+# @package _global_
+
+experiment_stage: sample
+
+mode: val
+projectname: lm1b_sampling
+fork_log: true
+
+batch_size: 16
+eval_batch_size: 16
+temperature: 1.0
+eval_and_log_first_n_batches: 2
+
+resume:
+  from_dir: ${train_log_dir}
+
+paths:
+  log_root: ${sample_log_dir}
+
+model:
+  params:
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+
+lightning:
+  trainer:
+    limit_val_batches: 50

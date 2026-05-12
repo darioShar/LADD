@@ -1,0 +1,8 @@
+# @package _global_
+# OWT dataset - Di-LADD model (VQ-VAE)
+
+defaults:
+  - /model/diladd_base
+
+# Dataset-specific overrides
+# (Uses base defaults: latent_vocab_size=1024)

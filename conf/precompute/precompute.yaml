@@ -1,0 +1,151 @@
+# @package _global_
+
+# Configuration for precomputing and storing latent embeddings
+
+seed: 42
+
+# ---------- Compute configuration ----------
+num_gpu_devices: ${auto_num_devices:}
+batch_size: 32
+num_workers: 8
+save_every_n_steps: 100  # chunk flush frequency during validation (set 0 to disable)
+latent_dtype: float32  # float32 or float16 for on-disk storage
+delete_chunks_after_save: false  # set true to remove chunk files after HF dataset is saved
+timing_log_every_n_steps: 1  # log timing per batch; set >1 to reduce log volume
+torch_compile: null # default, max-autotune-no-cudagraphs, reduce-overhead
+
+# ---------- Output directory ----------
+output_dir: null # "data/precomputed_latents/text8"
+
+# ---------- Encoder selection ----------
+encoder_arch: coladd_transformer # coladd
+encoder_name: null
+
+# ---------- AVAILABLE ENCODER MODELS CONFIGURATIONS ----------
+available_encoder_y_latent_dim: 
+  qwen3_embedding_8b: 1024
+  qwen3_embedding_06b: 1024
+  coladd_encoder_text8_32_4_210000_SEQ: 32
+  coladd_encoder_text8_768_48_SEQ_last: 768
+  coladd_encoder_text8_64_4_SEQ_last: 64
+  coladd_transformer_encoder_owt_2048_256_SEQ_last: 2048
+  kl_reg_001_var_001_coladd_text8_seq_768_48: 768
+  kl_reg_1_var_001_coladd_text8_seq_768_48: 768
+  kl_reg_00001_var_001_coladd_text8_seq_768_48: 768
+  normal_init_ca_resume_mdlm_official_seq_2048_256: 2048
+
+available_encoder_y_num_patches: 
+  qwen3_embedding_8b: 1
+  qwen3_embedding_06b: 1
+  coladd_encoder_text8_32_4_210000_SEQ: 4
+  coladd_encoder_text8_768_48_SEQ_last: 48
+  coladd_encoder_text8_64_4_SEQ_last: 4
+  coladd_transformer_encoder_owt_2048_256_SEQ_last: 256
+  kl_reg_001_var_001_coladd_text8_seq_768_48: 48
+  kl_reg_1_var_001_coladd_text8_seq_768_48: 48
+  kl_reg_00001_var_001_coladd_text8_seq_768_48: 48
+  normal_init_ca_resume_mdlm_official_seq_2048_256: 256
+
+available_checkpoint_paths:
+  qwen3_embedding_8b: null
+  qwen3_embedding_06b: null
+  coladd_encoder_text8_32_4_210000_SEQ: "logs/latent_end_to_end_32_text8/2025-08-13T01-43-58_text8-latentddlm-end-to-end_SEQ_32_4/checkpoints/epoch=000306-step=000210000.ckpt"
+  coladd_encoder_text8_768_48_SEQ_last: 'logs/models/text8/lddm_text8_seq_768_48/2025-09-05T23-45-43_text8_lddm_end_to_end_SEQ/checkpoints/last.ckpt'
+  coladd_encoder_text8_64_4_SEQ_last: 'logs/models/text8/lddm_text8_seq_64_4/2025-09-06T01-03-19_text8_lddm_end_to_end_SEQ/checkpoints/last.ckpt'
+  coladd_transformer_encoder_owt_2048_256_SEQ_last: 'logs/models/owt/transformer_lddm_owt_seq_2048_256/2025-09-11T07-50-26_owt_lddm_transformer_end_to_end_SEQ/checkpoints/last.ckpt'
+  kl_reg_001_var_001_coladd_text8_seq_768_48: 'logs/models/text8/kl_reg_0.01_var_0.01_lddm_text8_seq_768_48/2025-09-26T23-08-17_text8_lddm_transformer_SEQ/checkpoints/last.ckpt'
+  kl_reg_1_var_001_coladd_text8_seq_768_48: 'logs/models/text8/kl_reg_1.0_var_0.01_lddm_text8_seq_768_48/2025-09-26T23-13-42_text8_lddm_transformer_SEQ/checkpoints/last.ckpt'
+  kl_reg_00001_var_001_coladd_text8_seq_768_48: 'logs/models/text8/kl_reg_0.0001_var_0.01_lddm_text8_seq_768_48/2025-09-26T23-08-49_text8_lddm_transformer_SEQ/checkpoints/last.ckpt'
+  normal_init_ca_resume_mdlm_official_seq_2048_256: 'logs/models/owt/normal_init_ca_resume_mdlm_official_seq_2048_256/2025-09-23T09-40-16_owt_lddm_compatible_transformer_end_to_end_SEQ/checkpoints/last.ckpt'
+
+available_encoder_configs:
+  qwen3_embedding_8b: 
+    target: dlm.transformers.qwen3dit.qwen_embedding.QwenEmbeddingModel
+    params:
+      pretrained_model_name_or_path: "Qwen/Qwen3-Embedding-8B"
+      y_latent_dim: ${y_latent_dim}
+      freeze: true
+      trust_remote_code: true
+      pooling_strategy: "last_token"
+      normalize_embeddings: true
+  qwen3_embedding_06b:
+    target: dlm.transformers.qwen3dit.qwen_embedding.QwenEmbeddingModel
+    params:
+      pretrained_model_name_or_path: "Qwen/Qwen3-Embedding-0.6B"
+      y_latent_dim: ${y_latent_dim}
+      freeze: true
+      trust_remote_code: true
+      pooling_strategy: "last_token"
+      normalize_embeddings: true
+  coladd_dit:
+    target: dlm.transformers.dit.latent_dit.EncoderDiTModel
+    params:
+      config:
+        target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+        params:
+          mask_token_id: ${mask_token_id}
+          vocab_size: ${eval:"${vocab_size} + 1"}
+          hidden_size: 768
+          cond_hidden_size: 128  # For time embedding
+          num_hidden_layers: 12
+          num_attention_heads: 12
+          dropout: 0.15
+          x_time_type: none
+          y_time_type: time
+          y_latent_dim: ${y_latent_dim}
+          y_num_patches: ${y_num_patches}
+          normalize_embeddings: false
+          max_sequence_length: ${sequence_length}
+  coladd_transformer:
+    target: dlm.transformers.dit.latent_transformer.EncoderDiTModel
+    params:
+      config:
+        target: dlm.transformers.dit.configuration_latent_transformer.LatentTransformerConfig
+        params:
+          mask_token_id: ${mask_token_id}
+          vocab_size: ${eval:"${vocab_size} + 1"}
+          hidden_size: 768
+          cond_hidden_size: 128  # For time embedding
+          num_hidden_layers: 12
+          num_attention_heads: 12
+          dropout: 0.15
+          x_time_type: none
+          y_time_type: time
+          y_latent_dim: ${y_latent_dim}
+          y_num_patches: ${y_num_patches}
+          normalize_embeddings: false
+          max_sequence_length: ${sequence_length}
+
+# ---------- CHOSEN ENCODER MODEL CONFIGURATION ----------
+encoder_config: ${available_encoder_configs.${encoder_arch}}
+checkpoint_path: ${available_checkpoint_paths.${encoder_name}}
+y_latent_dim: ${available_encoder_y_latent_dim.${encoder_name}}
+y_num_patches: ${available_encoder_y_num_patches.${encoder_name}}
+
+# ---------- LOADING MODELS ----------
+training_stage: 1
+freeze_encoder: true
+core_model: SEQ
+
+# Full Co-LADD model configuration (only the parts needed for precompute)
+model:
+  params:
+    strict_loading: false
+    eval_and_log_first_n_batches: 0
+    teacher_model_name_or_path: gpt2-large
+    enable_entropy: false
+    enable_generative_perplexity: false
+    enable_gradient_moment_metric: false
+    enable_sliced_wasserstein: false
+    enable_token_distribution_kl: false
+    gradient_checkpointing: false
+    torch_compile: ${torch_compile}
+    use_ema: true  # With Qwen encoders we don't load EMA anyway
+    ema_decay: 0.9999
+    core_model: SEQ
+    freeze_encoder: ${freeze_encoder}
+    training_stage: ${training_stage}
+
+    # Encoder configuration chosen above
+    encoder_config: ${encoder_config}
+    # The rest (denoisers, sampler, etc.) are not required for precompute and can be left null.

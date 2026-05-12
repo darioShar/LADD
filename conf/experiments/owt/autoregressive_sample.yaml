@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - _sample_common
+  - override /base: autoregressive
+  - override /data: owt/owt_qwen_512
+  - override /model: owt/autoregressive
+  - _self_
+
+experiment_name: owt_autoregressive
+variant_name: autoregressive_bl
+
+group: autoregressive_sampling
+postfix: _${variant_name}_temp${temperature}
+
+core_model: AR
+model_size: BL
+torch_compile: null
+
+train_log_dir: logs/models/owt/ar_owt_${model_size}
+sample_log_dir: logs/models/owt/sampling_autoregressive/temperature_${temperature}_ar_owt_${model_size}
+
+model:
+  params:
+    generation_config:
+      temperature: ${temperature}
+      max_length: ${sequence_length}

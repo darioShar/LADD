@@ -1,0 +1,15 @@
+# @package _global_
+
+core_model: SEQ
+model_size: B
+patch_dim: 1024
+y_num_patches: 16
+all_zero_latent: true
+encoder_type: dit
+normalize_embeddings: false
+independent_timesteps: true
+y_noise_schedule: linear
+prediction_type: y_0
+use_rope_for_latents: false
+use_encoder_latent_sampling: true
+torch_compile: null

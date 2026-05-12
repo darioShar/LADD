@@ -1,0 +1,19 @@
+# @package lightning.callbacks
+
+# Matches your original ModelCheckpoint settings; plus LR monitor.
+model_checkpoint_callback:
+  target: lightning.pytorch.callbacks.ModelCheckpoint
+  params:
+    monitor: val/loss
+    mode: min
+    save_top_k: -1 # keep every checkpoint triggered by every_n_train_steps unless overridden
+    save_last: true
+    filename: '{epoch}-{step}'
+    every_n_train_steps: 10000
+    # save_on_train_epoch_end: null
+    # every_n_epochs: null # prevents from running a full validation run at the end of each epoch.
+
+model_summary:
+  target: lightning.pytorch.callbacks.ModelSummary
+  params:
+    max_depth: 1  # Show all layers (use 1 for top-level only, 2 for more detail)

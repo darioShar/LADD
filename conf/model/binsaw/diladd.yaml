@@ -1,0 +1,16 @@
+# @package _global_
+# Binary SAW dataset - Di-LADD model (VQ-VAE/Gumbel)
+
+defaults:
+  - /model/diladd_base
+
+model_size: XS
+
+ema_decay: 0.99
+encoder_type: dit
+
+# Model overrides
+model:
+  params:
+    enable_generative_perplexity: false
+    enable_gradient_moment_metric: false

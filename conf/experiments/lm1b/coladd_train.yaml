@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+  - _train_common
+  - _coladd_common
+  - _self_
+
+experiment_name: lm1b_coladd
+variant_name: coladd_lat128_last_layer
+
+group: coladd
+postfix: _coladd
+
+log_dir: logs/models/lm1b/coladd_${encoder_type}_${model_size}_${y_num_patches}_${patch_dim}_pool_${pooling_strategy}_p_r_${use_p_r_label}_ind_${independent_timesteps_label}

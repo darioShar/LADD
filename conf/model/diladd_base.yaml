@@ -1,0 +1,230 @@
+# @package _global_
+# Base configuration for Di-LADD (VQ-VAE/Gumbel) models
+# This provides the common structure for Di-LADD models across all datasets
+
+defaults:
+  - dit_sizes
+
+# Model size: S, B, L, or XL
+model_size: B
+
+# Encoder strategy for latent encoding/decoding
+encoder_strategy: vqvae    # vqvae or gumbel
+soft_inputs: true  # Whether to use soft inputs (embeddings) or hard inputs (token ids)
+flatten_outputs: false # flatten latents to (B, -1) or keep (B, seq_len, dim)
+attn_backend: sdpa  # auto | flash | sdpa
+
+# Latent structure
+codebook_size: 1024 # codebook size including mask token. K = 512–4096 is standard in vqvae
+latent_sequence_length: ${eval:"${sequence_length} // 4"}  # Length of latent sequence
+latent_mask_token_id: ${eval:"${codebook_size} - 1"} # last token is mask token
+
+use_rope_for_latents: true  # Set to false to use learned slot embeddings for latents
+
+# Update sampling to reflect latent sequence size
+num_inference_steps_latent: ${latent_sequence_length}
+
+# VQVAE specific
+vqvae_latent_dim: 128 # D = 128 or 256 is standard
+commitment_cost: 0.25 # 0.25 is standard
+# choose which lucidrains quantizer class to instantiate
+quantizer_type: str = 'VectorQuantize',  # VectorQuantize | ResidualVQ | GroupedResidualVQ | SimVQ
+# common VQ params
+vqvae_use_ema: true # lucidrains always uses EMA
+vqvae_ema_decay: 0.95
+codebook_dim: null # if activated, uses separate mlp -> lower projected dim (e.g., 16, 32)
+kmeans_init: true
+kmeans_iters: 10
+use_cosine_sim: true
+rotation_trick: false
+threshold_ema_dead_code: 2
+orthogonal_reg_weight: 0.0
+orthogonal_reg_max_codes: 128
+orthogonal_reg_active_codes_only: false
+# multi-headed VQ params
+heads: 1
+separate_codebook_per_head: false
+accept_image_fmap: false
+# residual VQ params
+num_quantizers: 1
+shared_codebook: false
+stochastic_sample_codes: false
+sample_codebook_temp: 0.1
+# grouped residual VQ param
+groups: 1
+# distributed behavior
+ddp_sync_mode: ${eval:"'lucidrains' if (${num_gpu_devices} * ${num_nodes}) > 1 else 'none'"}  # 'broadcast' | 'lucidrains' | 'none'
+sync_codebook: true
+sync_kmeans: true
+broadcast_src_rank: 0
+broadcast_every: 1
+# mask behavior
+require_quantizer_mask_support: true
+
+
+# Encoder output dimension based on encoder strategy
+encoder_output_dim_per_token:
+  gumbel: ${codebook_size} # logits over vocab
+  vqvae: ${vqvae_latent_dim} # embedding dimension
+
+# Resulting latent dimensions for our models
+y_num_patches: ${latent_sequence_length}
+patch_dim: ${encoder_output_dim_per_token.${encoder_strategy}}
+y_latent_dim: ${eval:"${patch_dim} * ${y_num_patches}"}
+
+# Encoder type selection
+encoder_type: dit  # options: qwen, bert, dit
+
+# Qwen encoder configuration (for vqvae encoder_strategy)
+qwen_embedding_model: Qwen/Qwen3-Embedding-0.6B
+qwen_pooling_strategy: last_layer  # last_layer keeps token-level alignment for VQ
+bert_embedding_model: bert-base-uncased
+bert_pooling_strategy: ${qwen_pooling_strategy}
+normalize_embeddings: false  # Usually false for VQ-VAE
+
+# Model head - discrete Di-LADD defaults to void
+model_head_size: V
+
+# DiT backbone - sizes come from dit_sizes.yaml based on model_size
+dit_dropout: 0.1
+dit_x_time_type: none
+dit_y_time_type: none # ['noise', 'time', 'none']
+
+# Encoder configurations
+
+dit_encoder_config:
+  target: dlm.transformers.dit.latent_dit.EncoderDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}   # reserve mask id
+        hidden_size: ${dit_hidden_size}
+        cond_hidden_size: ${dit_cond_hidden_size}
+        num_hidden_layers: ${dit_num_hidden_layers}
+        num_attention_heads: ${dit_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: none
+        y_time_type: none
+        y_latent_dim: ${y_latent_dim}
+        y_num_patches: ${y_num_patches}
+        normalize_embeddings: ${normalize_embeddings}
+        soft_inputs: ${soft_inputs}
+        flatten_outputs: ${flatten_outputs}
+        attn_backend: ${attn_backend}
+
+qwen_encoder_config:
+  target: dlm.transformers.qwen3dit.qwen_embedding.QwenEmbeddingModel
+  params:
+    pretrained_model_name_or_path: ${qwen_embedding_model}
+    y_latent_dim: ${y_latent_dim}
+    y_latent_len: ${y_num_patches}
+    freeze: ${freeze_encoder}
+    trust_remote_code: true
+    local_files_only: ${hf_local_files_only}
+    normalize_embeddings: ${normalize_embeddings}
+    pooling_strategy: ${qwen_pooling_strategy}
+    attn_backend: ${attn_backend}
+
+bert_encoder_config:
+  target: dlm.transformers.bert.bert_embedding.BertEmbeddingModel
+  params:
+    pretrained_model_name_or_path: ${bert_embedding_model}
+    y_latent_dim: ${y_latent_dim}
+    y_latent_len: ${y_num_patches}
+    freeze: ${freeze_encoder}
+    local_files_only: ${hf_local_files_only}
+    normalize_embeddings: ${normalize_embeddings}
+    pooling_strategy: ${bert_pooling_strategy}
+
+# Joint denoiser configuration
+mm_dit_joint_denoiser_config:
+  target: dlm.transformers.dit.latent_dit.JointDiscreteDiTModel
+  params:
+    config:
+      target: dlm.transformers.dit.configuration_latent_dit.LatentDiTConfig
+      params:
+        mask_token_id: ${mask_token_id}
+        vocab_size: ${eval:"${vocab_size} + 1"}
+        hidden_size: ${dit_hidden_size}
+        cond_hidden_size: ${dit_cond_hidden_size}
+        num_hidden_layers: ${dit_num_hidden_layers}
+        num_attention_heads: ${dit_num_attention_heads}
+        dropout: ${dit_dropout}
+        x_time_type: ${dit_x_time_type}
+        y_time_type: ${dit_y_time_type}
+        y_latent_dim: ${y_latent_dim}
+        y_num_patches: ${y_num_patches}
+        y_output_dim: ${codebook_size}
+        normalize_embeddings: false
+        soft_inputs: ${soft_inputs}
+        flatten_outputs: ${flatten_outputs}
+        head_hidden_size: ${dit_head_hidden_size}
+        head_num_layers: ${dit_head_num_layers}
+        head_num_attention_heads: ${dit_head_num_attention_heads}
+        attn_backend: ${attn_backend}
+        use_rope_for_latents: ${use_rope_for_latents}
+
+# Simple Vector quantizer configuration
+simple_vqvae_vector_quantizer_config:
+  target: dlm.transformers.vqvae.vector_quantizer.VectorQuantizer
+  params:
+    num_embeddings: ${codebook_size}
+    embedding_dim: ${patch_dim}
+    commitment_cost: ${commitment_cost}
+    use_ema: ${vqvae_use_ema}
+    decay: ${vqvae_ema_decay}
+    normalize: ${use_cosine_sim}
+    restart_threshold: ${threshold_ema_dead_code}
+    eps: 1e-5
+
+# Lucidrains Vector quantizer configuration  
+lucidrains_vqvae_vector_quantizer_config:
+  target: dlm.transformers.vqvae.lucidrain_vector_quantizer.LucidRainVectorQuantizer
+  params:
+    codebook_size: ${codebook_size}
+    vqvae_latent_dim: ${vqvae_latent_dim}
+    commitment_cost: ${commitment_cost}
+    quantizer_type: VectorQuantize # VectorQuantize | ResidualVQ | GroupedResidualVQ | SimVQ
+    decay: ${vqvae_ema_decay}
+    codebook_dim: ${codebook_dim}
+    kmeans_init: ${kmeans_init}
+    kmeans_iters: ${kmeans_iters}
+    use_cosine_sim: ${use_cosine_sim}
+    rotation_trick: ${rotation_trick}
+    threshold_ema_dead_code: ${threshold_ema_dead_code}
+    orthogonal_reg_weight: ${orthogonal_reg_weight}
+    orthogonal_reg_max_codes: ${orthogonal_reg_max_codes}
+    orthogonal_reg_active_codes_only: ${orthogonal_reg_active_codes_only}
+    # multi-headed VQ params
+    heads: ${heads}
+    separate_codebook_per_head: ${separate_codebook_per_head}
+    accept_image_fmap: ${accept_image_fmap}
+    # residual VQ params
+    num_quantizers: ${num_quantizers}
+    shared_codebook: ${shared_codebook}
+    stochastic_sample_codes: ${stochastic_sample_codes}
+    sample_codebook_temp: ${sample_codebook_temp}
+    # grouped residual VQ param
+    groups: ${groups}
+    # distributed behavior
+    ddp_sync_mode: ${ddp_sync_mode}
+    sync_codebook: ${sync_codebook}
+    sync_kmeans: ${sync_kmeans}
+    broadcast_src_rank: ${broadcast_src_rank}
+    broadcast_every: ${broadcast_every}
+    # mask behavior
+    require_quantizer_mask_support: ${require_quantizer_mask_support}
+
+# Model configuration - selects encoder based on encoder_type
+encoder_config_map:
+  dit: ${dit_encoder_config}
+  qwen: ${qwen_encoder_config}
+  bert: ${bert_encoder_config}
+
+model:
+  params:
+    encoder_config: ${encoder_config_map.${encoder_type}}
+    joint_denoiser_config: ${mm_dit_joint_denoiser_config}
+    vector_quantizer_config: ${lucidrains_vqvae_vector_quantizer_config}

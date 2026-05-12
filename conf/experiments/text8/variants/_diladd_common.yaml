@@ -1,0 +1,5 @@
+# @package _global_
+
+latent_sequence_length: 16
+codebook_size: 4096
+vqvae_latent_dim: 128

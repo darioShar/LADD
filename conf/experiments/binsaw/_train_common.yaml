@@ -1,0 +1,29 @@
+# @package _global_
+
+experiment_stage: train
+
+mode: train
+projectname: binsaw
+
+batch_size: 2048
+eval_batch_size: ${batch_size}
+accumulate_grad_batches: 1
+num_workers: 2
+
+paths:
+  log_root: ${log_dir}
+
+lightning:
+  trainer:
+    accumulate_grad_batches: ${accumulate_grad_batches}
+    reload_dataloaders_every_n_epochs: 1
+    val_check_interval: 1000
+  callbacks:
+    model_checkpoint_callback:
+      params:
+        every_n_train_steps: 1000
+        save_top_k: -1
+
+model:
+  params:
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}

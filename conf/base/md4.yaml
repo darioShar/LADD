@@ -1,0 +1,93 @@
+# @package _global_
+
+# Custom configuration for MD4
+
+# Data-provided fields
+vocab_size: null # to be defined by data
+sequence_length: null # to be defined by data
+mask_token_id: null # to be defined by data
+
+# Reproducibility
+seed: 42
+
+# Model behavior
+core_model: MD4
+conditional: false
+custom_encoder: false
+num_inference_steps: ${sequence_length}
+strict_loading: true
+ddp_find_unused_parameters: false
+
+# Training/infra defaults
+gradient_checkpointing: false
+torch_compile: null
+use_ema: true
+ema_decay: 0.9999
+eval_and_log_first_n_batches: 2
+limit_eval_batch_size: ${eval_batch_size}
+optimizer_config:
+  target: torch.optim.AdamW
+  params:
+    lr: 3e-4
+    betas: [0.9, 0.999]
+    weight_decay: 0.03
+    eps: 1e-8
+    fused: false
+scheduler_config:
+  name: cosine_with_warmup
+  num_warmup_steps: 2500
+
+model:
+  target: dlm.models.DiffusionLM
+  params:
+    sequence_length: ${sequence_length}
+    vocab_size: ${eval:"${vocab_size} + 1"} # +1 for internal mask token representation
+    conditional: ${conditional}
+    custom_encoder: ${custom_encoder}
+    strict_loading: ${strict_loading}
+    core_model: ${core_model}
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
+    teacher_model_name_or_path: gpt2-large
+    enable_entropy: true
+    enable_generative_perplexity: true
+    enable_gradient_moment_metric: true
+    enable_sliced_wasserstein: true
+    enable_token_distribution_kl: true
+    enable_grad_norms_logging: false
+    limit_eval_batch_size: ${limit_eval_batch_size}
+    gradient_checkpointing: ${gradient_checkpointing}
+    torch_compile: ${torch_compile}
+    use_ema: ${use_ema}
+    ema_decay: ${ema_decay}
+    optimizer_config: ${optimizer_config}
+    scheduler_config: ${scheduler_config}
+    model_config: null 
+    encoder_config: null
+    loss_config:
+      target: dlm.modules.diffusionmodules.loss.MaskedDiffusionLoss
+      params:
+        conditional: ${conditional}
+        mask_token_id: ${mask_token_id}
+        noise_sampler_config:
+          target: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+          params:
+            eps: 1e-4
+        time_sampler_config:
+          target: dlm.modules.diffusionmodules.time_sampling.LowDiscrepancySampling
+          params:
+            eps: 0.
+    sampler_config:
+      target: dlm.modules.diffusionmodules.sampling.AbsorbingSampler
+      params:
+        max_new_tokens: ${sequence_length}
+        num_inference_steps: ${num_inference_steps}
+        enable_caching: false
+        noise_removal: true
+        mask_token_id: ${mask_token_id}
+        verbose: true
+        discretization_config:
+          target: dlm.modules.diffusionmodules.discretization.CosineDiscretization
+        noise_sampler_config:
+          target: dlm.modules.diffusionmodules.noise_sampling.LinearSampling
+          params:
+            eps: 1e-4

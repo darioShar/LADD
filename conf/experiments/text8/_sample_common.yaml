@@ -1,0 +1,19 @@
+# @package _global_
+
+experiment_stage: sample
+
+mode: val
+projectname: text8_sampling
+fork_log: true
+
+batch_size: 32
+
+resume:
+  from_dir: ${train_log_dir}
+
+paths:
+  log_root: ${sample_log_dir}
+
+model:
+  params:
+    eval_and_log_first_n_batches: ${eval_and_log_first_n_batches}
