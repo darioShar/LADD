@@ -13,13 +13,7 @@ This is the official implementation of the paper [Latent-Augmented Discrete Diff
 - **Co-LADD**: LADD with continuous latents from an encoder, diffused with a continuous process.
 - **Di-LADD**: LADD with discrete latents from a vector-quantized encoder, diffused with a masked discrete process.
 
-We implement the following datasets:
-- **Binsaw**: a simple low-dimensional binary sawtooth dataset
-- **text8**
-- **LM1B**
-- **OWT**
-
-and for the zero-shot experiments we also have **ptb, wikitext103, lambada, ag_news, pubmed, arxiv**.
+We implement the following datasets **Binsaw** (a simple low-dimensional binary sawtooth dataset), **text8**, **LM1B**, **OWT**, and, for the zero-shot experiments, **ptb, wikitext103, lambada, ag_news, pubmed, arxiv**.
 
 ## Installation
 
@@ -123,7 +117,6 @@ checkpoint cadence.
 
 | Dataset | MDLM | Co-LADD-64 | Di-LADD-64 |
 | --- | ---: | ---: | ---: |
-| text8 | 45 | 137 | 102 |
 | LM1B | 296 | 425 | 430 |
 | OWT | 1,296 | 1,760 | 1,786 |
 
