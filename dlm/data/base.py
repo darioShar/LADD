@@ -2,6 +2,7 @@ import logging
 import os
 from itertools import chain
 from pathlib import Path
+from typing import Any
 
 import lightning as L
 import torch
@@ -102,6 +103,7 @@ class BaseDataModule(L.LightningDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
         prefetch_factor: int | None = 2,
+        train_split: str = 'train',
         val_size: float | None = None,
         val_split: str = 'validation',
         test_split: str = 'test',
@@ -122,6 +124,7 @@ class BaseDataModule(L.LightningDataModule):
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.prefetch_factor = prefetch_factor
+        self.train_split = train_split
         self.val_size = val_size
         self.val_split = val_split
         self.test_split = test_split
@@ -153,7 +156,7 @@ class BaseDataModule(L.LightningDataModule):
     def setup(self, stage=None):
         dataset = instantiate_from_config(self.data_config)
         if not isinstance(dataset, DatasetDict):
-            dataset = DatasetDict(train=dataset)
+            dataset = DatasetDict({self.train_split: dataset})
         dataset = self.preprocess(dataset)
         if self.transform is not None and self.transform_all:
             dataset = dataset.map(
@@ -164,24 +167,34 @@ class BaseDataModule(L.LightningDataModule):
             )
         elif self.transform is not None:
             dataset = dataset.with_transform(self.transform)
+        self._assign_dataset_splits(dataset)
+
+    def _assign_dataset_splits(self, dataset: DatasetDict) -> None:
+        self.datasets = {}
         if self.val_size is not None:
+            if self.train_split not in dataset:
+                raise ValueError(
+                    f'Cannot create validation split from dataset without train split "{self.train_split}". '
+                    f'Available splits: {list(dataset.keys())}',
+                )
             if isinstance(self.val_size, float):
                 self.datasets['train'], self.datasets['val'] = (
-                    dataset['train'].train_test_split(test_size=self.val_size, seed=42).values()
+                    dataset[self.train_split].train_test_split(test_size=self.val_size, seed=42).values()
                 )
             else:
                 # if val_size is an int, we take the last val_size samples as the validation set
-                train_dataset = dataset['train'].select(
-                    range(len(dataset['train']) - self.val_size),
+                train_dataset = dataset[self.train_split].select(
+                    range(len(dataset[self.train_split]) - self.val_size),
                 )
-                val_dataset = dataset['train'].select(
-                    range(len(dataset['train']) - self.val_size, len(dataset['train'])),
+                val_dataset = dataset[self.train_split].select(
+                    range(len(dataset[self.train_split]) - self.val_size, len(dataset[self.train_split])),
                 )
                 self.datasets['train'] = train_dataset
                 self.datasets['val'] = val_dataset
         else:
-            self.datasets['train'] = dataset['train']
-            if isinstance(dataset, DatasetDict) and self.val_split in dataset:
+            if self.train_split in dataset:
+                self.datasets['train'] = dataset[self.train_split]
+            if self.val_split in dataset:
                 self.datasets['val'] = dataset[self.val_split]
         if self.test_split in dataset:
             self.datasets['test'] = dataset[self.test_split]
@@ -277,6 +290,11 @@ class DataModuleForPT(BaseDataModule):
         precomputed_latents_path=None,
         verify_latents_match = True,
         pack_sequences: bool = True,
+        text_column: str = 'text',
+        text_fields: list[str] | None = None,
+        text_field_separator: str = ' ',
+        detokenizers: list[str] | None = None,
+        use_eos_separation: bool = True,
         **kwargs,
     ):
         assert transform_config is None, 'transform_config is not supported for DataModuleForPT'
@@ -290,7 +308,62 @@ class DataModuleForPT(BaseDataModule):
         self.precomputed_latents = {'train': None, 'val': None}
         self.verify_latents_match = verify_latents_match
         self.pack_sequences = pack_sequences
+        self.text_column = text_column
+        self.text_fields = text_fields
+        self.text_field_separator = text_field_separator
+        self.detokenizers = list(detokenizers) if detokenizers is not None else None
+        self.use_eos_separation = use_eos_separation
         self._built = False
+
+    def _detokenizer_names(self) -> list[str]:
+        if self.detokenizers is not None:
+            return self.detokenizers
+        params = self.data_config.get('params', {}) if hasattr(self.data_config, 'get') else {}
+        dataset_path = params.get('path', '') if hasattr(params, 'get') else ''
+        if isinstance(dataset_path, str) and 'lm1b' in dataset_path:
+            return ['lm1b']
+        return []
+
+    def _normalize_text_column(self, dataset: Dataset | DatasetDict) -> Dataset | DatasetDict:
+        if not self.text_fields:
+            return dataset
+
+        text_fields = tuple(self.text_fields)
+        separator = self.text_field_separator
+        target_column = self.text_column
+
+        def _build_text(example: dict[str, Any]) -> dict[str, str]:
+            values: list[str] = []
+            for field in text_fields:
+                value = example[field]
+                if value is None:
+                    continue
+                value_str = str(value).strip()
+                if value_str:
+                    values.append(value_str)
+            return {target_column: separator.join(values)}
+
+        return dataset.map(
+            _build_text,
+            num_proc=self.num_proc,
+            desc=f'Building {target_column} column',
+        )
+
+    def _apply_detokenizers(self, dataset: Dataset | DatasetDict) -> Dataset | DatasetDict:
+        from .utils import get_detokenizer
+
+        for name in self._detokenizer_names():
+            detokenizer = get_detokenizer(name)
+
+            def _detokenize(example, detokenizer=detokenizer):
+                return {self.text_column: detokenizer(example[self.text_column])}
+
+            dataset = dataset.map(
+                _detokenize,
+                num_proc=self.num_proc,
+                desc=f'Applying {name} detokenizer',
+            )
+        return dataset
 
     def preprocess(self, dataset: Dataset | DatasetDict) -> Dataset | DatasetDict:
         if self.raw_save_dir is not None:
@@ -307,19 +380,8 @@ class DataModuleForPT(BaseDataModule):
             return load_from_disk(self.save_dir)
         if self.streaming_num_shards is not None:
             dataset = dataset.to_iterable_dataset(num_shards=self.streaming_num_shards)
-        # TODO: make it more flexible
-        if 'lm1b' in self.data_config['params']['path']:
-            from .utils import lm1b_detokenizer
-
-            def _detokenize(example):
-                example['text'] = lm1b_detokenizer(example['text'])
-                return example
-
-            dataset = dataset.map(
-                _detokenize,
-                num_proc=self.num_proc,
-                desc='Applying lm1b detokenizer',
-            )
+        dataset = self._normalize_text_column(dataset)
+        dataset = self._apply_detokenizers(dataset)
         # tokenize the dataset
         # since this will be pickled to avoid _LazyModule error in Hasher force logger loading before tokenize_function
         tok_logger = transformers.utils.logging.get_logger(
@@ -329,12 +391,12 @@ class DataModuleForPT(BaseDataModule):
         if self.pack_sequences:
             def tokenize_function(examples):
                 input_ids = self.tokenizer(
-                    examples['text'],
+                    examples[self.text_column],
                     add_special_tokens=False,
                     return_attention_mask=False,
                 ).input_ids
-                # insert eos token
-                input_ids = [i + [self.tokenizer.eos_token_id] for i in input_ids]
+                if self.use_eos_separation:
+                    input_ids = [i + [self.tokenizer.eos_token_id] for i in input_ids]
                 return {'input_ids': input_ids}
 
             dataset = dataset.map(
@@ -344,7 +406,7 @@ class DataModuleForPT(BaseDataModule):
                 load_from_cache_file=True,
                 desc='Tokenizing',
             )
-            dataset = dataset.remove_columns(['text'])
+            dataset = dataset.select_columns(['input_ids'])
 
             # group the dataset into chunks of block_size
             def group_texts(
@@ -384,7 +446,7 @@ class DataModuleForPT(BaseDataModule):
         else:
             def tokenize_and_pad(examples):
                 tokenized = self.tokenizer(
-                    examples['text'],
+                    examples[self.text_column],
                     add_special_tokens=False,
                     truncation=True,
                     max_length=self.max_length - 2,
@@ -429,7 +491,7 @@ class DataModuleForPT(BaseDataModule):
                 load_from_cache_file=True,
                 desc='Tokenizing',
             )
-            dataset = dataset.remove_columns(['text'])
+            dataset = dataset.select_columns(['input_ids', 'attention_mask', 'labels'])
             dataset = dataset.with_format(type='torch')
         if self.trainer.is_global_zero and self.save_dir is not None:
             dataset.save_to_disk(self.save_dir)
@@ -459,28 +521,8 @@ class DataModuleForPT(BaseDataModule):
                 print_rank_zero(f'DataModuleForPT.setup: loading dataset from {self.save_dir}')
                 dataset = load_from_disk(self.save_dir)
                 if not isinstance(dataset, DatasetDict):
-                    dataset = DatasetDict(train=dataset)
-                self.datasets = {}
-                if self.val_size is not None:
-                    if isinstance(self.val_size, float):
-                        self.datasets['train'], self.datasets['val'] = (
-                            dataset['train'].train_test_split(test_size=self.val_size, seed=42).values()
-                        )
-                    else:
-                        train_dataset = dataset['train'].select(
-                            range(len(dataset['train']) - self.val_size),
-                        )
-                        val_dataset = dataset['train'].select(
-                            range(len(dataset['train']) - self.val_size, len(dataset['train'])),
-                        )
-                        self.datasets['train'] = train_dataset
-                        self.datasets['val'] = val_dataset
-                else:
-                    self.datasets['train'] = dataset['train']
-                    if isinstance(dataset, DatasetDict) and self.val_split in dataset:
-                        self.datasets['val'] = dataset[self.val_split]
-                if self.test_split in dataset:
-                    self.datasets['test'] = dataset[self.test_split]
+                    dataset = DatasetDict({self.train_split: dataset})
+                self._assign_dataset_splits(dataset)
             else:
                 print_rank_zero('DataModuleForPT.setup: falling back to BaseDataModule.setup')
                 super().setup(stage)

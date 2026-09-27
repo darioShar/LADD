@@ -42,3 +42,78 @@ def lm1b_detokenizer(x):
     x = x.replace("$ ", "$")
     x = x.replace("£ ", "£")
     return x
+
+
+def wt_detokenizer(text: str) -> str:
+    # contractions
+    text = text.replace("s '", "s'")
+    text = re.sub(r"/' [0-9]/", r"/'[0-9]/", text)
+
+    # number separators
+    text = text.replace(' @-@ ', '-')
+    text = text.replace(' @,@ ', ',')
+    text = text.replace(' @.@ ', '.')
+
+    # punctuation
+    text = text.replace(' : ', ': ')
+    text = text.replace(' ; ', '; ')
+    text = text.replace(' . ', '. ')
+    text = text.replace(' ! ', '! ')
+    text = text.replace(' ? ', '? ')
+    text = text.replace(' , ', ', ')
+
+    # double brackets
+    text = re.sub(r'\(\s*([^\)]*?)\s*\)', r'(\1)', text)
+    text = re.sub(r'\[\s*([^\]]*?)\s*\]', r'[\1]', text)
+    text = re.sub(r'{\s*([^}]*?)\s*}', r'{\1}', text)
+    text = re.sub(r'"\s*([^"]*?)\s*"', r'"\1"', text)
+    text = re.sub(r"'\s*([^']*?)\s*'", r"'\1'", text)
+
+    # miscellaneous
+    text = text.replace('= = = =', '====')
+    text = text.replace('= = =', '===')
+    text = text.replace('= =', '==')
+    text = text.replace(f' {chr(176)} ', chr(176))
+    text = text.replace(' \n', '\n')
+    text = text.replace('\n ', '\n')
+    text = text.replace(' N ', ' 1 ')
+    return text.replace(" 's", "'s")
+
+
+def ptb_detokenizer(text: str) -> str:
+    text = text.replace(" 's", "'s")
+    text = text.replace("s ' ", "s' ")
+    text = text.replace(" n't", "n't")
+    text = text.replace(' \n ', '\n')
+    text = text.replace('\\/', '/')
+    for _ in range(10):
+        text = text.replace(' N ', ' 1 ')
+    text = text.replace('$ 1', '$1')
+    text = text.replace('# 1', '#1')
+    return text.replace('<unk>', '?')
+
+
+def lambada_detokenizer(text: str) -> str:
+    text = text.replace('“', '"')
+    text = text.replace('”', '"')
+    return f'\n{text.strip()}'
+
+
+_DETOKENIZERS = {
+    'lm1b': lm1b_detokenizer,
+    'one_billion_word': lm1b_detokenizer,
+    'one_billion_words': lm1b_detokenizer,
+    'wikitext': wt_detokenizer,
+    'wt': wt_detokenizer,
+    'ptb': ptb_detokenizer,
+    'penn_treebank': ptb_detokenizer,
+    'lambada': lambada_detokenizer,
+}
+
+
+def get_detokenizer(name: str):
+    key = name.strip().lower()
+    if key not in _DETOKENIZERS:
+        available = ', '.join(sorted(_DETOKENIZERS))
+        raise ValueError(f'Unknown detokenizer "{name}". Available detokenizers: {available}')
+    return _DETOKENIZERS[key]

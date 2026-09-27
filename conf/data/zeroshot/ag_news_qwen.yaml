@@ -1,0 +1,50 @@
+# @package _global_
+
+# Zero-shot AG News evaluation with Qwen tokenizer.
+# Override `sequence_length` from the CLI/script as needed.
+vocab_size: 151669
+sequence_length: 512
+mask_token_id: 151669
+
+# DataLoader/hardware
+total_batch_size: 512
+num_gpu_devices: ${auto_num_devices:}
+num_nodes: 1
+batch_size: 16
+eval_batch_size: ${batch_size}
+# batch_size = total_batch_size / (num_gpu_devices * num_nodes * accumulate_grad_batches)
+# so accumulate_grad_batches = max(total_batch_size / (num_gpu_devices * num_nodes * batch_size), 1)
+accumulate_grad_batches: ${eval:"int(max(${total_batch_size} / (${num_gpu_devices} * ${num_nodes} * ${batch_size}), 1))"}
+num_workers: ${eval:"2 * ${num_gpu_devices}"}
+
+precomputed_latents_path: null
+
+data:
+  target: dlm.data.base.DataModuleForPT
+  params:
+    tokenizer_config:
+      target: transformers.AutoTokenizer
+      params:
+        pretrained_model_name_or_path: Qwen/Qwen3-Embedding-0.6B
+        padding_side: left
+        pad_token: <|endoftext|>
+        mask_token: <|mask|>
+        bos_token: <|endoftext|>
+        eos_token: <|endoftext|>
+    data_config:
+      target: datasets.load_dataset
+      params:
+        path: sh0416/ag_news
+        trust_remote_code: true
+    save_dir: data/zeroshot/ag_news_qwen_packed_${sequence_length}
+    max_length: ${sequence_length}
+    val_split: test
+    batch_size: ${batch_size}
+    num_workers: ${num_workers}
+    num_proc: ${cpu_count:}
+    precomputed_latents_path: ${precomputed_latents_path}
+    text_column: text
+    text_fields: [title, description]
+    detokenizers: [wikitext, lm1b]
+    pack_sequences: true
+    use_eos_separation: false

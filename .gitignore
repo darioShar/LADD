@@ -221,3 +221,4 @@ __marimo__/
 logs**
 .data/
 .tmp/
+.hf_cache/
