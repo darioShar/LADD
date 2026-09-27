@@ -14,7 +14,7 @@ postfix: _sample_${variant_name}
 training_stage: 1
 freeze_encoder: false
 p_mask_input_enc: 0.5
-use_encoder_latent_sampling: true
+use_encoder_latent_sampling: false
 use_precomputed_latent_sampling: false
 num_inference_steps_latent: ${num_inference_steps}
 eval_and_log_first_n_batches: 4
