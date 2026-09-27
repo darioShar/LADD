@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: 'If you use this software, please cite the paper specified in preferred-citation.'
+type: software
+title: 'LADD: Latent-Augmented Discrete Diffusion Models'
+authors:
+  - family-names: Shariatian
+    given-names: Dario
+repository-code: 'https://github.com/darioShar/LADD'
+url: 'https://github.com/darioShar/LADD'
+preferred-citation:
+  type: generic
+  title: 'Latent-Augmented Discrete Diffusion Models'
+  authors:
+    - family-names: Shariatian
+      given-names: Dario
+    - family-names: Durmus
+      given-names: Alain
+    - family-names: Simsekli
+      given-names: Umut
+    - family-names: Peluchetti
+      given-names: Stefano
+  year: 2025
+  doi: '10.48550/arXiv.2510.18114'
+  url: 'https://arxiv.org/abs/2510.18114'
+  notes: >-
+    arXiv:2510.18114, revised 12 May 2026 (v3). First submitted on 20 October 2025
+    under the title Latent Discrete Diffusion Models (LDDMs).

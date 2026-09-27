@@ -1,4 +1,4 @@
-# Latent-Augmented Discrete Diffusion models (LADD)
+# Latent-Augmented Discrete Diffusion Models (LADD)
 
 <p align="center">
   <img src="docs/assets/coladd_process_density.gif" alt="Joint Co-LADD forward and backward process" width="49%">
@@ -7,7 +7,21 @@
   <em>Joint Co-LADD and Joint Di-LADD forward/backward processes.</em>
 </p>
 
-This is the official implementation of the paper [Latent-Augmented Discrete Diffusion Models](https://arxiv.org/abs/2510.18114). LADD augments masked discrete diffusion with an auxiliary latent channel, in order to improve generative performance in the few-step regime. The repository implements:
+This is the official implementation of the paper [Latent-Augmented Discrete Diffusion Models](https://arxiv.org/abs/2510.18114). 
+
+An earlier version of this work appeared as [Latent Discrete Diffusion Models (LDDMs)](https://arxiv.org/abs/2510.18114v1)
+on 20 October 2025. The [revised preprint of 12 May 2026](https://arxiv.org/abs/2510.18114v3) uses the title
+**Latent-Augmented Discrete Diffusion Models**. Both titles refer to the same arXiv record,
+[arXiv:2510.18114](https://arxiv.org/abs/2510.18114), with DOI
+[10.48550/arXiv.2510.18114](https://doi.org/10.48550/arXiv.2510.18114).
+
+This work was presented at the [SPIGM workshop at ICML 2026](https://openreview.net/forum?id=0sZ4DiHn76)
+(Structured Probabilistic Inference & Generative Modeling).
+
+
+
+
+LADD augments masked discrete diffusion with an auxiliary latent channel, in order to improve generative performance in the few-step regime. The repository implements:
 
 - **MDLM**: a masked discrete diffusion baseline over token sequences.
 - **Co-LADD**: LADD with continuous latents from an encoder, diffused with a continuous process.
@@ -204,10 +218,11 @@ Libertarians would generally agree that government intrusion in the home industr
 ## Citation
 
 ```bibtex
-@misc{shariatian2026latentaugmenteddiscretediffusionmodels,
+@misc{shariatian2025latentaugmenteddiscretediffusionmodels,
       title={Latent-Augmented Discrete Diffusion Models},
       author={Dario Shariatian and Alain Durmus and Umut Simsekli and Stefano Peluchetti},
-      year={2026},
+      year={2025},
+      doi={10.48550/arXiv.2510.18114},
       eprint={2510.18114},
       archivePrefix={arXiv},
       primaryClass={cs.LG},
