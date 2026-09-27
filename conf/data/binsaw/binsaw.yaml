@@ -1,0 +1,29 @@
+# @package _global_
+
+# Dataset parameters
+vocab_size: 2
+sequence_length: 128
+mask_token_id: 2
+seed: null
+
+# DataLoader/hardware
+num_gpu_devices: 1
+batch_size: 2048
+eval_batch_size: 2048
+num_workers: 2
+
+precomputed_latents_path: null
+
+data:
+  target: dlm.data.binary_sawtooth.BinarySawtoothDataModule
+  params:
+    batch_size: ${batch_size}
+    sequence_length: ${sequence_length}
+    num_samples_train: 204800 # 204800
+    num_samples_val: 20480
+    num_workers: ${num_workers}
+    num_saws: 2
+    scale: 0.01
+    uniform_shift: true
+    seed: ${seed}
+    regenerate_each_epoch: true  # Set to true to regenerate data at the start of each epoch

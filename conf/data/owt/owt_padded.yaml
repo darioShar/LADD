@@ -1,0 +1,43 @@
+# @package _global_
+
+# Dataset parameters
+vocab_size: 50257
+sequence_length: 1024
+mask_token_id: 50257
+
+# DataLoader/hardware
+num_gpu_devices: 4 # Number of GPUs to use
+# batch size is 512 / num_gpu_devices
+# batch_size: ${eval:"256 // ${num_gpu_devices}"} # 512 for num_gpu_devices GPUs
+batch_size: 16
+eval_batch_size: 16
+num_workers: 8
+
+precomputed_latents_path: null
+
+data:
+  target: dlm.data.base.DataModuleForPT
+  params:
+    tokenizer_config:
+      target: transformers.AutoTokenizer
+      params:
+        pretrained_model_name_or_path: gpt2
+        padding_side: left
+        pad_token: <|endoftext|>
+        mask_token: <|mask|>
+        bos_token: <|endoftext|>
+        eos_token: <|endoftext|>
+    data_config:
+      target: datasets.load_dataset
+      params:
+        path: Skylion007/openwebtext
+        trust_remote_code: true
+        # split: "train[:10%]" # for sanity check
+    save_dir: data/owt_left_padded
+    max_length: ${sequence_length}
+    val_size: 100_000
+    batch_size: ${batch_size} # 32 # total batch size should be 512
+    num_workers: ${num_workers}
+    num_proc: ${eval:"len(__import__('os').sched_getaffinity(0))"}
+    precomputed_latents_path: ${precomputed_latents_path}
+    pack_sequences: false

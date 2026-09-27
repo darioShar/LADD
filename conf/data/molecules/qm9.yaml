@@ -1,0 +1,27 @@
+# @package _global_
+
+dataset_name: qm9
+data_dir: data/molecules
+
+node_vocab_size: 4
+edge_vocab_size: 5
+node_mask_token_id: ${node_vocab_size}
+edge_mask_token_id: ${edge_vocab_size}
+max_nodes: 9
+latent_len: 16
+
+num_gpu_devices: 1
+batch_size: ${eval:"1024 // ${num_gpu_devices}"}
+eval_batch_size: ${batch_size}
+num_workers: ${eval:"2 * ${num_gpu_devices}"}
+
+data:
+  target: dlm.data.molecules.MoleculeDataModule
+  params:
+    data_dir: ${data_dir}
+    dataset_name: ${dataset_name}
+    batch_size: ${batch_size}
+    eval_batch_size: ${eval_batch_size}
+    num_workers: ${num_workers}
+    regenerate: false
+    return_smiles: true

@@ -1,0 +1,24 @@
+# @package _global_
+
+# Dataset parameters
+vocab_size: 27
+sequence_length: 128
+mask_token_id: 27
+
+# DataLoader/hardware
+num_gpu_devices: 4 # Number of GPUs to use
+# batch size is 512 / num_gpu_devices
+batch_size: ${eval:"512 // ${num_gpu_devices}"} # 512 for num_gpu_devices GPUs
+eval_batch_size: ${batch_size}
+
+precomputed_latents_path: null
+
+num_workers: 8
+
+data:
+  target: dlm.data.text8.Text8DataModule
+  params:
+    batch_size: ${batch_size} # 512 datapoints total, 8 devices
+    max_length: ${sequence_length}
+    num_workers: ${num_workers}
+    precomputed_latents_path: ${precomputed_latents_path}

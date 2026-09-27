@@ -1,0 +1,45 @@
+# @package _global_
+
+# Dataset parameters
+# Qwen tokenizer: after adding mask token, len(tok)=151670 with mask_token_id=151669
+# Set vocab_size to match the highest token ID (mask_token_id)
+# Models will add +1 to reserve space for their internal mask token representation
+vocab_size: 151669
+sequence_length: 512
+mask_token_id: 151669
+
+# DataLoader/hardware
+num_gpu_devices: 4
+batch_size: 16
+eval_batch_size: 16
+num_workers: 8
+
+precomputed_latents_path: null
+
+data:
+  target: dlm.data.base.DataModuleForPT
+  params:
+    tokenizer_config:
+      target: transformers.AutoTokenizer
+      params:
+        pretrained_model_name_or_path: Qwen/Qwen3-Embedding-0.6B
+        padding_side: left
+        pad_token: <|endoftext|>
+        mask_token: <|mask|>
+        bos_token: <|endoftext|>
+        eos_token: <|endoftext|>
+    data_config:
+      target: datasets.load_dataset
+      params:
+        path: Skylion007/openwebtext
+        trust_remote_code: true
+        # split: "train[:10%]" # for sanity check
+    raw_save_dir: null
+    save_dir: data/owt_qwen_packed_512
+    max_length: ${sequence_length}
+    val_size: 100_000
+    batch_size: ${batch_size}
+    num_workers: ${num_workers}
+    num_proc: ${eval:"len(__import__('os').sched_getaffinity(0))"}
+    precomputed_latents_path: ${precomputed_latents_path}
+    pack_sequences: true
